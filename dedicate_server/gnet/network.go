@@ -1,4 +1,4 @@
-package core_libs
+package gnet
 
 import (
 	"fmt"
@@ -6,11 +6,7 @@ import (
 	"net"
 	"strconv"
 	"time"
-
-	"./packetizer"
 )
-
-const MAX_MSG_HEADER_COUNT = 20
 
 // * Pakcet format
 // * requirements : user_id;command;
@@ -73,23 +69,29 @@ func ExecLockstep() {
 	var last_mili int = GetNowTimeMili()
 	var now_mili int
 	for {
+		print("0")
 		now_mili = GetNowTimeMili()
 		if (now_mili - last_mili) >= LOCKSTEP_CNT {
 			fmt.Println("duration: ", (now_mili - last_mili))
 			last_mili = now_mili
 
+			print("1")
 			msg := <-msg_queue_ch
+			print("1.1")
 			copy(sending_buffer[sending_size:], msg.data)
 			sending_size += msg.size
 
 			//나머지
 			empty_ch := false
 			for (sending_size < DGRAM_SIZE) && (empty_ch == false) {
+				print("2")
 				select {
 				case msg := <-msg_queue_ch:
+					print("2.1")
 					copy(sending_buffer[sending_size:], msg.data)
 					sending_size += msg.size
 				default:
+					print("2.2")
 					empty_ch = true
 				}
 			}
@@ -119,7 +121,7 @@ func handleJoin(userid string, client_addr net.Addr) {
 }
 func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 	buffstr := string(buf[:])
-	headers := packetizer.ParseMsg(buffstr)
+	headers := ParseMsg(buffstr)
 	userid := headers[0]
 	command := headers[1]
 	if command == "ping" {
