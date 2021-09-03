@@ -7,10 +7,9 @@
 script = ExtResource( 2 )
 
 [node name="enemySwimming_1" type="Sprite" parent="."]
-position = Vector2( 365, 260 )
-scale = Vector2( 0.772727, 0.979167 )
+position = Vector2( 402, 98 )
 texture = ExtResource( 1 )
 
 [node name="enemySwimming_2" type="Sprite" parent="."]
-position = Vector2( 602, 165 )
+position = Vector2( 403, 305 )
 texture = ExtResource( 1 )

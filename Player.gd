@@ -14,11 +14,9 @@ var user_index_map = {}
 
 # * Pakcet format
 # * user_id;command;action;delta-time;
-
 var myindex
 var this
 var keepalive_thread
-
 func _parse_msg(msg):
 	if len(msg) <= 0:
 		return
@@ -133,7 +131,8 @@ func _ready():
 	name = my_id
 	screen_size = get_viewport_rect().size
 	myindex = get_index()
-	this = get_child(myindex)
+	this = self#get_child(myindex)
+	
 	keepalive_thread = Thread.new()
 	keepalive_thread.start(self, "_keepalive_loop")
 	
@@ -147,8 +146,6 @@ func _keepalive_loop():
 		pass
 	keepalive_thread.wait_to_finish()
 	pass
-	
-	
 
 const RED = Color(1.0, 0, 0, 0.4)
 const GREEN = Color(0, 1.0, 0, 0.4)
@@ -176,16 +173,37 @@ func _input(event):
 			angle_from += 3
 			angle_to += 3
 		last_mouse_pos= event.position
+	else :
+		print("unknown")
 		
-		
-#	angle_from += rotation_angle
-#	angle_to += rotation_angle
 	# We only wrap angles when both of them are bigger than 360.
 	if angle_from > 360 and angle_to > 360:
 		angle_from = wrapf(angle_from, 0, 360)
 		angle_to = wrapf(angle_to, 0, 360)
-	update()
 #	print("Viewport Resolution is: ", get_viewport_rect().size)
+	update()
+	
+	var msg_tosend = ""
+	var velocity = Vector2()  # The player's movement vector.
+	if Input.is_action_pressed("ui_right"):
+		msg_tosend = "move;ui_right;"
+		velocity.x += 1
+	if Input.is_action_pressed("ui_left"):
+		msg_tosend = "move;ui_left;"
+		velocity.x -= 1
+	if Input.is_action_pressed("ui_down"):
+		msg_tosend = "move;ui_down;"
+		velocity.y += 1
+	if Input.is_action_pressed("ui_up"):
+		msg_tosend = "move;ui_up;"
+		velocity.y -= 1
+	
+	if msg_tosend.length() > 0 :
+		if this == null : 
+			return
+		msg_tosend += String(get_process_delta_time()) + ";" + String(speed) + ";" + str(this.position) + ";" 
+		var pac = my_id + ";" + msg_tosend + "m;"
+		udp_sock.put_packet(pac.to_ascii())
 
 func _draw():
 	draw_circle_arc_poly(Vector2(position.x, position.y), radius, angle_from, angle_to, color)
@@ -235,8 +253,6 @@ func _process(delta):
 	if Input.is_action_pressed("ui_up"):
 		msg_tosend = "move;ui_up;"
 		velocity.y -= 1
-	if Input.is_key_pressed(KEY_K):
-		msg_tosend = "key;pressed_K;"
 		
 	if velocity.length() > 0:
 		velocity = velocity.normalized() * speed
