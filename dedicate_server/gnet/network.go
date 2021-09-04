@@ -60,44 +60,40 @@ func (self *MsgBuff) Write(data []byte, data_size uint32) {
 	self.size += data_size
 }
 
-func GetNowTimeMili() int {
-	return time.Now().Nanosecond() / 1000000
+func GetNowTimeMili() int64 {
+	return time.Now().UnixNano() / 1000000
 }
+
+var forcheck int = 0
+
 func ExecLockstep() {
 	sending_buffer := make([]byte, MAX_BUFFSIZE)
 	var sending_size uint32 = 0
-	var last_mili int = GetNowTimeMili()
-	var now_mili int
+	var last_mili int64 = GetNowTimeMili()
+	var now_mili int64
 	for {
-		print("0")
 		now_mili = GetNowTimeMili()
-		if (now_mili - last_mili) >= LOCKSTEP_CNT {
-			fmt.Println("duration: ", (now_mili - last_mili))
-			last_mili = now_mili
-
-			print("1")
-			msg := <-msg_queue_ch
-			print("1.1")
-			copy(sending_buffer[sending_size:], msg.data)
-			sending_size += msg.size
-
-			//나머지
-			empty_ch := false
-			for (sending_size < DGRAM_SIZE) && (empty_ch == false) {
-				print("2")
-				select {
-				case msg := <-msg_queue_ch:
-					print("2.1")
-					copy(sending_buffer[sending_size:], msg.data)
-					sending_size += msg.size
-				default:
-					print("2.2")
-					empty_ch = true
-				}
-			}
-			broadcast(sending_buffer, sending_size)
-			sending_size = 0
+		msg := <-msg_queue_ch
+		copy(sending_buffer[sending_size:], msg.data)
+		sending_size += msg.size
+		for (now_mili - last_mili) <= LOCKSTEP_CNT {
+			now_mili = GetNowTimeMili()
 		}
+		fmt.Println("duration: ", (now_mili - last_mili))
+		last_mili = now_mili
+		//나머지
+		empty_ch := false
+		for (sending_size < DGRAM_SIZE) && (empty_ch == false) {
+			select {
+			case msg := <-msg_queue_ch:
+				copy(sending_buffer[sending_size:], msg.data)
+				sending_size += msg.size
+			default:
+				empty_ch = true
+			}
+		}
+		broadcast(sending_buffer, sending_size)
+		sending_size = 0
 	}
 }
 
@@ -164,7 +160,7 @@ func MakeUDPServer(server_ip string, server_port int) net.Addr {
 			if (n == 0) || (err != nil) {
 				fmt.Println("buffer size is 0...")
 			}
-			go handleCommand(buf, n, clientAddress)
+			handleCommand(buf, n, clientAddress)
 		}
 	}()
 	return server.LocalAddr()

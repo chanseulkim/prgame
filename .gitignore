@@ -1579,3 +1579,8 @@ abstract-platformer-370-assets/Vector/vector_backgrounds.swf
 abstract-platformer-370-assets/Vector/vector_complete.svg
 abstract-platformer-370-assets/Vector/vector_complete.svg.import
 abstract-platformer-370-assets/Vector/vector_complete.swf
+*.stex
+*.mesh
+dedicate_server/bin
+dedicate_server/pkg
+

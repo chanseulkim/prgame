@@ -7,4 +7,5 @@
     "terminal.integrated.env.osx": {
         "GOPATH": "${workspaceFolder}" // osx 에서 vscode 프로그램 내 터미널을 GOPATH 환경 변수 변경
     },
+    "git.ignoreLimitWarning": true,
 }
