@@ -8,20 +8,26 @@ const MAX_MSG_HEADER_COUNT = 20
 // * requirements : user_id;command;
 // * user_id;command;action;delta-time;
 const (
-	CMD_Enter byte = 0
-	CMD_Leave      = 1
-	CMD_Action
-	CMD_Move
-	CMD_Ping
+	CMD_ENTER byte = 0
+	CMD_LEAVE      = 1
+	CMD_ACTION
+	CMD_MOVE
+	CMD_PING
+)
+const (
+	ACT_UIUP   byte = 0
+	ACT_UIDOWN      = 1
+	ACT_UILEFT
+	ACT_UIRIGHT
 )
 
-type msg_header struct {
+type MsgHeader struct {
 	Command   byte
 	Action    byte
 	Timestamp byte
 }
 
-func ParseMsg(msg string) [MAX_MSG_HEADER_COUNT]string {
+func SpliteMsg(msg string) [MAX_MSG_HEADER_COUNT]string {
 	var ret [MAX_MSG_HEADER_COUNT]string
 	if len(msg) <= 0 {
 		return ret

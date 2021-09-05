@@ -13,7 +13,7 @@ import (
 // * user_id;command;action;delta-time;
 // var client_addrs *list.List = list.New()
 
-const LOCKSTEP_CNT = 15                                          // miliseconds
+const LOCKSTEP_CNT = 15                                          // ?? miliseconds per onetime
 var client_addrs map[string]net.Addr = make(map[string]net.Addr) // k : user_id, v : address
 var joined_clients map[string]string = make(map[string]string)
 var last_position map[string]string = make(map[string]string)
@@ -41,30 +41,9 @@ func unicast(userid string, buf []byte, buf_len int) {
 	}
 }
 
-type MsgBuff struct {
-	data     []byte
-	size     uint32
-	capacity uint32
-}
-
-func NewMsgBuff(data []byte, data_size uint32) *MsgBuff {
-	var buff MsgBuff
-	buff.data = make([]byte, data_size)
-	copy(buff.data, data)
-	buff.size = data_size
-	return &buff
-}
-
-func (self *MsgBuff) Write(data []byte, data_size uint32) {
-	copy(self.data[self.size:], data)
-	self.size += data_size
-}
-
 func GetNowTimeMili() int64 {
 	return time.Now().UnixNano() / 1000000
 }
-
-var forcheck int = 0
 
 func ExecLockstep() {
 	sending_buffer := make([]byte, MAX_BUFFSIZE)
@@ -82,14 +61,15 @@ func ExecLockstep() {
 		fmt.Println("duration: ", (now_mili - last_mili))
 		last_mili = now_mili
 		//나머지
-		empty_ch := false
-		for (sending_size < DGRAM_SIZE) && (empty_ch == false) {
+		for sending_size < DGRAM_SIZE {
 			select {
 			case msg := <-msg_queue_ch:
 				copy(sending_buffer[sending_size:], msg.data)
 				sending_size += msg.size
 			default:
-				empty_ch = true
+				broadcast(sending_buffer, sending_size)
+				sending_size = 0
+				return
 			}
 		}
 		broadcast(sending_buffer, sending_size)
@@ -115,9 +95,10 @@ func handleJoin(userid string, client_addr net.Addr) {
 		joined_clients[client_addr.String()] = userid
 	}
 }
+
 func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 	buffstr := string(buf[:])
-	headers := ParseMsg(buffstr)
+	headers := SpliteMsg(buffstr)
 	userid := headers[0]
 	command := headers[1]
 	if command == "ping" {
@@ -152,7 +133,9 @@ func MakeUDPServer(server_ip string, server_port int) net.Addr {
 		log.Fatal(err)
 	}
 	fmt.Println("server address: ", server.LocalAddr().String())
+
 	go ExecLockstep()
+
 	go func() {
 		for {
 			buf := make([]byte, MAX_BUFFSIZE)
