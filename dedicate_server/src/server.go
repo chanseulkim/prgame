@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"./gnet"
+	"dedicate_server/gnet"
 )
 
 func main() {

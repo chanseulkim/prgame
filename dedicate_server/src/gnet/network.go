@@ -15,11 +15,9 @@ import (
 
 const LOCKSTEP_CNT = 15                                          // ?? miliseconds per onetime
 var client_addrs map[string]net.Addr = make(map[string]net.Addr) // k : user_id, v : address
-var joined_clients map[string]string = make(map[string]string)
+var entered_clients map[string]string = make(map[string]string)
 var last_position map[string]string = make(map[string]string)
 var server net.PacketConn
-
-var msg_queue_ch = make(chan *MsgBuff)
 
 const DGRAM_SIZE = 1400
 const MAX_BUFFSIZE = 1500
@@ -48,18 +46,18 @@ func GetNowTimeMili() int64 {
 func ExecLockstep() {
 	sending_buffer := make([]byte, MAX_BUFFSIZE)
 	var sending_size uint32 = 0
-	var last_mili int64 = GetNowTimeMili()
-	var now_mili int64
+	var last_timestamp int64 = GetNowTimeMili()
+	var now_timestamp int64
 	for {
-		now_mili = GetNowTimeMili()
+		now_timestamp = GetNowTimeMili()
 		msg := <-msg_queue_ch
 		copy(sending_buffer[sending_size:], msg.data)
 		sending_size += msg.size
-		for (now_mili - last_mili) <= LOCKSTEP_CNT {
-			now_mili = GetNowTimeMili()
+		for (now_timestamp - last_timestamp) <= LOCKSTEP_CNT {
+			now_timestamp = GetNowTimeMili()
 		}
-		fmt.Println("duration: ", (now_mili - last_mili))
-		last_mili = now_mili
+		last_timestamp = now_timestamp
+		//fmt.Println("duration: ", (now_mili - last_mili))
 		//나머지
 		for sending_size < DGRAM_SIZE {
 			select {
@@ -75,54 +73,6 @@ func ExecLockstep() {
 		broadcast(sending_buffer, sending_size)
 		sending_size = 0
 	}
-}
-
-func handleJoin(userid string, client_addr net.Addr) {
-	_, exists := joined_clients[client_addr.String()]
-	if exists == false {
-		for _, usrid := range joined_clients {
-			syncmsg := usrid + ";sync;" + last_position[usrid] + ";"
-			syncmsg_len := len(syncmsg)
-			syncmsg_buff := make([]byte, syncmsg_len)
-			copy(syncmsg_buff, syncmsg)
-			_, err := server.WriteTo(syncmsg_buff[:syncmsg_len], client_addr)
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-		fmt.Println("joined client : " + client_addr.String() + ", " + userid)
-		client_addrs[userid] = client_addr
-		joined_clients[client_addr.String()] = userid
-	}
-}
-
-func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
-	buffstr := string(buf[:])
-	headers := SpliteMsg(buffstr)
-	userid := headers[0]
-	command := headers[1]
-	if command == "ping" {
-		fmt.Println("ping pong")
-		var msg []byte = []byte{'p', 'o', 'n', 'g'}
-		msg_len := len(msg)
-		unicast(userid, msg, msg_len)
-		return
-	} else if command == "join" {
-		handleJoin(userid, client_addr)
-	} else if command == "move" {
-		// action := headers[2]
-		// if action == "ui_left" {
-		// 	//
-		// }
-
-		//delta_time := headers[3]
-		//speed := headers[4]
-		pos := headers[5]
-		last_position[userid] = pos
-		// fmt.Println(userid + " last pos : " + pos)
-	}
-	fmt.Println("new : ", buf_len)
-	msg_queue_ch <- NewMsgBuff(buf, uint32(buf_len))
 }
 
 func MakeUDPServer(server_ip string, server_port int) net.Addr {
