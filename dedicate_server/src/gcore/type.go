@@ -2,8 +2,8 @@ package gcore
 
 type Float float32
 
-type GObject interface {
-	Position() Vector3
+type GObject struct {
+	Position []Vector2
 }
 
 type Vector2 struct {

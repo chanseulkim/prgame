@@ -37,6 +37,8 @@ func _parse_msg(msg):
 
 func _process_msg(msg):
 	var headers = _parse_msg(msg)
+	if headers == null:
+		return
 	for header in headers:
 		if len(header) < 2:
 			continue
@@ -63,7 +65,7 @@ func _process_msg(msg):
 			add_child(new_player)
 			user_index_map[user_id] = get_child_count() - 1
 			pass
-		if (command == "join") && (user_id != my_id):
+		if (command == "enter") && (user_id != my_id):
 			var new_player = load('res://Player.tscn').instance()
 			new_player.name = user_id
 			new_player.init(default_pos_x, default_pos_y)
@@ -122,7 +124,7 @@ func init(x, y):
 	
 func connect2Server(serv_ip, serv_port):
 	udp_sock.set_dest_address(serv_ip, serv_port)
-	var pac = my_id + ";" + "join;m;"
+	var pac = my_id + ";" + "enter;m;"
 	udp_sock.put_packet(pac.to_ascii())
 	print("player " + my_id + " ready")
 	
@@ -157,53 +159,53 @@ var angle_from = 75
 var angle_to = 195
 
 var last_mouse_pos = Vector2()
-func _input(event):
-	if event is InputEventMouseButton:
-		print("Mouse Click/Unclick at: ", event.position)
-	elif event is InputEventMouseMotion:
-		print("Mouse Motion at: ", event.position)
-		# 캐릭터 위치기준 마우스의 위치 변화
-		if (last_mouse_pos.x - event.position.x) < 0 :
-			angle_from += 3
-			angle_to += 3
-		if (last_mouse_pos.y - event.position.y) > 0 :
-			angle_from -= 3
-			angle_to -= 3
-		if (last_mouse_pos.y - event.position.y) < 0 :
-			angle_from += 3
-			angle_to += 3
-		last_mouse_pos= event.position
-	else :
-		print("unknown")
-		
-	# We only wrap angles when both of them are bigger than 360.
-	if angle_from > 360 and angle_to > 360:
-		angle_from = wrapf(angle_from, 0, 360)
-		angle_to = wrapf(angle_to, 0, 360)
-#	print("Viewport Resolution is: ", get_viewport_rect().size)
-	update()
-	
-	var msg_tosend = ""
-	var velocity = Vector2()  # The player's movement vector.
-	if Input.is_action_pressed("ui_right"):
-		msg_tosend = "move;ui_right;"
-		velocity.x += 1
-	if Input.is_action_pressed("ui_left"):
-		msg_tosend = "move;ui_left;"
-		velocity.x -= 1
-	if Input.is_action_pressed("ui_down"):
-		msg_tosend = "move;ui_down;"
-		velocity.y += 1
-	if Input.is_action_pressed("ui_up"):
-		msg_tosend = "move;ui_up;"
-		velocity.y -= 1
-	
-	if msg_tosend.length() > 0 :
-		if this == null : 
-			return
-		msg_tosend += String(get_process_delta_time()) + ";" + String(speed) + ";" + str(this.position) + ";" 
-		var pac = my_id + ";" + msg_tosend + "m;"
-		udp_sock.put_packet(pac.to_ascii())
+#func _input(event):
+#	if event is InputEventMouseButton:
+#		print("Mouse Click/Unclick at: ", event.position)
+#	elif event is InputEventMouseMotion:
+#		print("Mouse Motion at: ", event.position)
+#		# 캐릭터 위치기준 마우스의 위치 변화
+#		if (last_mouse_pos.x - event.position.x) < 0 :
+#			angle_from += 3
+#			angle_to += 3
+#		if (last_mouse_pos.y - event.position.y) > 0 :
+#			angle_from -= 3
+#			angle_to -= 3
+#		if (last_mouse_pos.y - event.position.y) < 0 :
+#			angle_from += 3
+#			angle_to += 3
+#		last_mouse_pos= event.position
+#	else :
+#		print("unknown")
+#
+#	# We only wrap angles when both of them are bigger than 360.
+#	if angle_from > 360 and angle_to > 360:
+#		angle_from = wrapf(angle_from, 0, 360)
+#		angle_to = wrapf(angle_to, 0, 360)
+##	print("Viewport Resolution is: ", get_viewport_rect().size)
+#	update()
+#
+#	var msg_tosend = ""
+#	var velocity = Vector2()  # The player's movement vector.
+#	if Input.is_action_pressed("ui_right"):
+#		msg_tosend = "move;ui_right;"
+#		velocity.x += 1
+#	if Input.is_action_pressed("ui_left"):
+#		msg_tosend = "move;ui_left;"
+#		velocity.x -= 1
+#	if Input.is_action_pressed("ui_down"):
+#		msg_tosend = "move;ui_down;"
+#		velocity.y += 1
+#	if Input.is_action_pressed("ui_up"):
+#		msg_tosend = "move;ui_up;"
+#		velocity.y -= 1
+#
+#	if msg_tosend.length() > 0 :
+#		if this == null : 
+#			return
+#		msg_tosend += String(get_process_delta_time()) + ";" + String(speed) + ";" + str(this.position) + ";" 
+#		var pac = my_id + ";" + msg_tosend + "m;"
+#		udp_sock.put_packet(pac.to_ascii())
 
 func _draw():
 	draw_circle_arc_poly(Vector2(position.x, position.y), radius, angle_from, angle_to, color)
