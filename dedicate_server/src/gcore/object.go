@@ -5,6 +5,11 @@ import (
 	"net"
 )
 
+const (
+	DEFAULT_COLISION_RADIUS Float = 20.0
+	DEFAULT_SIGHT_LEN       Float = 20.0
+)
+
 type Player struct {
 	Uid             string
 	Addr            net.Addr

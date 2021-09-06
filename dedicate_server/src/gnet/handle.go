@@ -10,27 +10,29 @@ import (
 	. "dedicate_server/gcore"
 )
 
-var colision_radius Float = 20.0
-var sight_value Float = 20.0
 var msg_queue_ch = make(chan *MsgBuff)
 
-var avg_delay int64 = 0
-var fps_val int64 = 0
-var frame_count int = 0
+const FPS = 60
 
-const fps = 60
+type DelayChecker struct {
+	durs        int64
+	frame_count int
+}
 
-func checkFps(duration int64) {
-	frame_count++
-	if frame_count >= fps {
-		avg_delay = fps_val / fps
+func (c *DelayChecker) set(duration int64) {
+	c.frame_count++
+	if c.frame_count >= FPS {
+		avg_delay := c.durs / FPS
 		fmt.Println("avg_delay : ", avg_delay)
-		frame_count = 0
-		fps_val = 0
+		c.frame_count = 0
+		c.durs = 0
 		return
 	}
-	fps_val += duration
+	c.durs += duration
 }
+
+var delay_checker DelayChecker
+
 func ExecLockstep() {
 	sending_buffer := make([]byte, MAX_BUFFSIZE)
 	var sending_size uint32 = 0
@@ -46,9 +48,8 @@ func ExecLockstep() {
 			now_timestamp = GetNowTimeMili()
 			duration = (now_timestamp - last_timestamp)
 		}
-		checkFps(duration)
+		delay_checker.set(duration)
 		duration = 0
-		last_timestamp = now_timestamp
 		//나머지
 		for (sending_size != 0) && (sending_size < DGRAM_SIZE) {
 			select {
@@ -82,8 +83,7 @@ func EnterClient(userid string, client_addr net.Addr, pos Vector2) {
 			}
 		}
 		fmt.Println("enter client : " + client_addr.String() + ", " + userid)
-		//client_addrs[userid] = client_addr
-		GetWorld().Players[userid] = NewPlayer(userid, client_addr, pos, colision_radius)
+		GetWorld().Players[userid] = NewPlayer(userid, client_addr, pos, DEFAULT_COLISION_RADIUS)
 	}
 }
 
