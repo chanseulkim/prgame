@@ -6,6 +6,10 @@ import (
 )
 
 const (
+// DEFAULT_SCREEN_SIZE Vector2 = Vector2{1024, 600}
+)
+
+const (
 	DEFAULT_COLISION_RADIUS Float = 20.0
 	DEFAULT_SIGHT_LEN       Float = 20.0
 )
@@ -31,10 +35,14 @@ func NewPlayer(uid string, address net.Addr, position Vector2, colision_radius F
 }
 
 type World struct {
-	Players  map[string]*Player // addr, player
-	Objects  []GObject
-	Position Vector2
+	Players     map[string]*Player // addr, player
+	Objects     []*GObject
+	Position    Vector2
+	screen_size Vector2
 }
+
+func (w *World) SetScreenSize(screen_size Vector2)         { w.screen_size = screen_size }
+func (w *World) GetScreenSize(screen_size Vector2) Vector2 { return w.screen_size }
 
 var world_instance *World
 

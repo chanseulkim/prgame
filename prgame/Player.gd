@@ -1,8 +1,7 @@
 extends Area2D
 
 export var speed = 400  # How fast the player will move (pixels/sec).
-var screen_size  # Size of the game window.
-var udp_sock = PacketPeerUDP.new()
+var screen_size # Size of the game window.
 var default_pos_x = float(100.0)
 var default_pos_y = float(100.0)
 var timestamp = OS.get_ticks_msec()
@@ -11,12 +10,9 @@ var is_connected_to_server = false
 
 # user's id and child index
 var user_index_map = {}
-
 # * Pakcet format
 # * user_id;command;action;delta-time;
 var myindex
-var this
-var keepalive_thread
 func _parse_msg(msg):
 	if len(msg) <= 0:
 		return
@@ -42,7 +38,7 @@ func _process_msg(msg):
 	for header in headers:
 		if len(header) < 2:
 			continue
-		print(header)
+		#print(header)
 		var user_id = String(header[0])
 		var command = String(header[1])
 		if (command == "sync"):
@@ -61,8 +57,9 @@ func _process_msg(msg):
 					y = trimedpos.substr(p+1).to_float()
 			var new_player = load('res://Player.tscn').instance()
 			new_player.name = user_id
+			#$'/root/Game/'.add_child(new_player)
 			new_player.init(x, y)
-			add_child(new_player)
+			Network.add_player(user_id, new_player)
 			user_index_map[user_id] = get_child_count() - 1
 			pass
 		if (command == "enter") && (user_id != my_id):
@@ -100,53 +97,26 @@ func _handle_move(user_id, action, delta_time):
 
 	var delta = delta_time.to_float()
 	if user_id != my_id:
-		var child_index = user_index_map[user_id]
-		var child = get_child(child_index)
-		child.position += velocity * delta
-		child.position.x = clamp(child.position.x, 0, screen_size.x)
-		child.position.y = clamp(child.position.y, 0, screen_size.y)
+		var player
+		if user_id in Network.players:
+			player = Network.players[user_id]
+		else :
+			var child_index = user_index_map[user_id]
+			player = get_child(child_index)
+		player.position += velocity * delta
+		player.position.x = clamp(player.position.x, 0, screen_size.x)
+		player.position.y = clamp(player.position.y, 0, screen_size.y)
 		return
-	this.position += velocity * delta
-	this.position.x = clamp(this.position.x, 0, screen_size.x)
-	this.position.y = clamp(this.position.y, 0, screen_size.y)
-		
-	if velocity.x != 0:
-		$AnimatedSprite.animation = "walk"
-		$AnimatedSprite.flip_v = false
-		# See the note below about boolean assignment
-		$AnimatedSprite.flip_h = velocity.x < 0
-	elif velocity.y != 0:
-		$AnimatedSprite.animation = "up"
-		$AnimatedSprite.flip_v = velocity.y > 0
+
 func init(x, y):
 	self.position += Vector2(x, y)
 	pass
 	
-func connect2Server(serv_ip, serv_port):
-	udp_sock.set_dest_address(serv_ip, serv_port)
-	var pac = my_id + ";" + "enter;m;"
-	udp_sock.put_packet(pac.to_ascii())
-	print("player " + my_id + " ready")
 	
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	name = my_id
 	screen_size = get_viewport_rect().size
-	myindex = get_index()
-	this = self#get_child(myindex)
-	
-	keepalive_thread = Thread.new()
-	keepalive_thread.start(self, "_keepalive_loop")
-	
-func _keepalive_loop():
-	while true:
-		print("ping")
-		_wait(10)
-		if udp_sock != null:
-			var pac = my_id + ";ping;m;"
-			udp_sock.put_packet(pac.to_ascii())
-		pass
-	keepalive_thread.wait_to_finish()
 	pass
 
 const RED = Color(1.0, 0, 0, 0.4)
@@ -201,44 +171,40 @@ var last_mouse_pos = Vector2()
 #		velocity.y -= 1
 #
 #	if msg_tosend.length() > 0 :
-#		if this == null : 
-#			return
-#		msg_tosend += String(get_process_delta_time()) + ";" + String(speed) + ";" + str(this.position) + ";" 
+#		msg_tosend += String(get_process_delta_time()) + ";" + String(speed) + ";" + str(self.position) + ";" 
 #		var pac = my_id + ";" + msg_tosend + "m;"
 #		udp_sock.put_packet(pac.to_ascii())
 
-func _draw():
-	draw_circle_arc_poly(Vector2(position.x, position.y), radius, angle_from, angle_to, color)
-	#draw_circle_arc(Vector2(position.x, position.y), radius, angle_from, angle_to, color)
-	
-func draw_circle_arc_poly(center, radius, angle_from, angle_to, color):
-	var nb_points = 32
-	var points_arc = PoolVector2Array()
-	points_arc.push_back(center)
-	var colors = PoolColorArray([color])
-
-	for i in range(nb_points + 1):
-		var angle_point = deg2rad(angle_from + i * (angle_to - angle_from) / nb_points - 90)
-		points_arc.push_back(center + Vector2(cos(angle_point), sin(angle_point)) * radius)
-	draw_polygon(points_arc, colors)
-
-func draw_circle_arc(center, radius, angle_from, angle_to, color):
-	var nb_points = 32
-	var points_arc = PoolVector2Array()
-	for i in range(nb_points + 1):
-		var angle_point = deg2rad(angle_from + i * (angle_to-angle_from) / nb_points - 90)
-		points_arc.push_back(center + Vector2(cos(angle_point), sin(angle_point)) * radius)
-
-	for index_point in range(nb_points):
-		draw_line(points_arc[index_point], points_arc[index_point + 1], color)
+#func _draw():
+#	draw_circle_arc_poly(Vector2(position.x, position.y), radius, angle_from, angle_to, color)
+#	#draw_circle_arc(Vector2(position.x, position.y), radius, angle_from, angle_to, color)
+#
+#func draw_circle_arc_poly(center, radius, angle_from, angle_to, color):
+#	var nb_points = 32
+#	var points_arc = PoolVector2Array()
+#	points_arc.push_back(center)
+#	var colors = PoolColorArray([color])
+#
+#	for i in range(nb_points + 1):
+#		var angle_point = deg2rad(angle_from + i * (angle_to - angle_from) / nb_points - 90)
+#		points_arc.push_back(center + Vector2(cos(angle_point), sin(angle_point)) * radius)
+#	draw_polygon(points_arc, colors)
+#
+#func draw_circle_arc(center, radius, angle_from, angle_to, color):
+#	var nb_points = 32
+#	var points_arc = PoolVector2Array()
+#	for i in range(nb_points + 1):
+#		var angle_point = deg2rad(angle_from + i * (angle_to-angle_from) / nb_points - 90)
+#		points_arc.push_back(center + Vector2(cos(angle_point), sin(angle_point)) * radius)
+#
+#	for index_point in range(nb_points):
+#		draw_line(points_arc[index_point], points_arc[index_point + 1], color)
 		
 # Called every frame. 'delta' is the elapsed time since the previous frame.
+
 func _process(delta):
-	
-	if this == null:
-		return
-	if udp_sock.get_available_packet_count() > 0:
-		var recved_msg = udp_sock.get_packet().get_string_from_ascii()
+	var recved_msg = Network.read()
+	if recved_msg != null :
 		_process_msg(recved_msg)
 	
 	var msg_tosend = ""
@@ -262,10 +228,23 @@ func _process(delta):
 	else:
 		$AnimatedSprite.stop()
 		
+	self.position += velocity * delta
+	self.position.x = clamp(self.position.x, 0, screen_size.x)
+	self.position.y = clamp(self.position.y, 0, screen_size.y)
+		
+	if velocity.x != 0:
+		$AnimatedSprite.animation = "walk"
+		$AnimatedSprite.flip_v = false
+		# See the note below about boolean assignment
+		$AnimatedSprite.flip_h = velocity.x < 0
+	elif velocity.y != 0:
+		$AnimatedSprite.animation = "up"
+		$AnimatedSprite.flip_v = velocity.y > 0
+		
 	if msg_tosend.length() > 0 :
-		msg_tosend += String(delta) + ";" + String(speed) + ";" + str(this.position) + ";" 
+		msg_tosend += String(delta) + ";" + String(speed) + ";" + str(self.position) + ";" 
 		var pac = my_id + ";" + msg_tosend + "m;"
-		udp_sock.put_packet(pac.to_ascii())
+		Network.send(pac)
 	pass
 
 

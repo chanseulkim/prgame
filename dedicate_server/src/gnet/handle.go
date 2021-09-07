@@ -6,6 +6,7 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 
 	. "dedicate_server/gcore"
 )
@@ -13,26 +14,11 @@ import (
 var msg_queue_ch = make(chan *MsgBuff)
 
 const FPS = 60
+const LOCKSTEP_CNT = 200 // ?? miliseconds per onetime
 
-type DelayChecker struct {
-	durs        int64
-	frame_count int
+func GetNowTimeMili() int64 {
+	return time.Now().UnixNano() / 1000000
 }
-
-func (c *DelayChecker) set(duration int64) {
-	c.frame_count++
-	if c.frame_count >= FPS {
-		avg_delay := c.durs / FPS
-		fmt.Println("avg_delay : ", avg_delay)
-		c.frame_count = 0
-		c.durs = 0
-		return
-	}
-	c.durs += duration
-}
-
-var delay_checker DelayChecker
-
 func ExecLockstep() {
 	sending_buffer := make([]byte, MAX_BUFFSIZE)
 	var sending_size uint32 = 0
@@ -43,12 +29,12 @@ func ExecLockstep() {
 		msg := <-msg_queue_ch
 		copy(sending_buffer[sending_size:], msg.data)
 		sending_size += msg.size
-		last_timestamp = GetNowTimeMili()
-		for duration <= LOCKSTEP_CNT {
-			now_timestamp = GetNowTimeMili()
-			duration = (now_timestamp - last_timestamp)
+		now_timestamp = GetNowTimeMili()
+		duration = (now_timestamp - last_timestamp)
+		if duration <= LOCKSTEP_CNT {
+			continue
 		}
-		delay_checker.set(duration)
+		last_timestamp = now_timestamp
 		duration = 0
 		//나머지
 		for (sending_size != 0) && (sending_size < DGRAM_SIZE) {
@@ -59,7 +45,6 @@ func ExecLockstep() {
 			default:
 				broadcast(sending_buffer, sending_size)
 				sending_size = 0
-				break
 			}
 		}
 		if sending_size > 0 {
@@ -69,10 +54,13 @@ func ExecLockstep() {
 	}
 }
 
-func EnterClient(userid string, client_addr net.Addr, pos Vector2) {
+func enterClient(userid string, client_addr net.Addr, pos Vector2) bool {
 	_, exists := GetWorld().Players[userid]
 	if exists == false {
 		for _, player := range GetWorld().Players {
+			if userid == player.Uid {
+				continue
+			}
 			syncmsg := player.Uid + ";sync;" + GetWorld().Players[player.Uid].GetPositionStr() + ";m;"
 			syncmsg_len := len(syncmsg)
 			syncmsg_buff := make([]byte, syncmsg_len)
@@ -80,11 +68,13 @@ func EnterClient(userid string, client_addr net.Addr, pos Vector2) {
 			_, err := server.WriteTo(syncmsg_buff[:syncmsg_len], client_addr)
 			if err != nil {
 				log.Fatal(err)
+				return false
 			}
 		}
 		fmt.Println("enter client : " + client_addr.String() + ", " + userid)
 		GetWorld().Players[userid] = NewPlayer(userid, client_addr, pos, DEFAULT_COLISION_RADIUS)
 	}
+	return true
 }
 
 func handleMove(x Float, y Float, action string) {
@@ -126,15 +116,16 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 		unicast(userid, msg, msg_len)
 		return
 	} else if command == "enter" {
-		pos := headers[5]
-		pos_v2, _ := GetPosV2(pos)
-		EnterClient(userid, client_addr, pos_v2)
+		player_pos := headers[2]
+		pos_v2, _ := posStr2V2(player_pos)
+		enterClient(userid, client_addr, pos_v2)
+		// screen_size := headers[2]
 	} else if command == "move" {
 		action := headers[2]
 		//delta_time := headers[3]
 		//speed := headers[4]
 		pos := headers[5]
-		pos_v2, _ := GetPosV2(pos)
+		pos_v2, _ := posStr2V2(pos)
 		player := GetWorld().Players[userid]
 		if player != nil {
 			player.UpdatePos(pos_v2)
@@ -147,8 +138,9 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 	msg_queue_ch <- NewMsgBuff(buf, uint32(buf_len))
 }
 
-func GetPosV2(str string) (Vector2, error) {
-	strings.Trim(str, "()")
+// "(40, 40)" -> x:40, y:40 Float Vector2
+func posStr2V2(str string) (Vector2, error) {
+	str = strings.Trim(str, "()")
 	tok := ", "
 	p := strings.Index(str, tok)
 	if p == -1 {
