@@ -1,4 +1,5 @@
 .import/*
+prgame/.import/*
 abstract-platformer-370-assets/*
 *.stex
 *.mesh

@@ -3,7 +3,7 @@
 [ext_resource path="res://dodge_assets/art/enemySwimming_1.png" type="Texture" id=1]
 [ext_resource path="res://world.gd" type="Script" id=2]
 
-[node name="Main" type="Node2D"]
+[node name="world" type="Node2D"]
 script = ExtResource( 2 )
 
 [node name="enemySwimming_1" type="Sprite" parent="."]
