@@ -22,14 +22,13 @@ func _ready():
 	Network.main_uid = my_id
 	get_tree().change_scene('res://Game.tscn')
 	
-#
-#	var noti_msg = "obj;noti;"
-#	var cd = get_children()
-#	for c in cd:
-#		if "enemy" in c.name:
-#			noti_msg += c.name + ";" + str(c.position) + ";m;"
-#			Network.send(noti_msg)
-#			c.hide()
-#	pass
+	var noti_msg = "obj;noti;"
+	var cd = get_children()
+	for c in cd:
+		if "enemy" in c.name:
+			noti_msg += c.name + ";" + str(c.position) + ";m;"
+			Network.send(noti_msg)
+			c.hide()
+	pass
 
 

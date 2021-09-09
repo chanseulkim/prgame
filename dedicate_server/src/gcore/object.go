@@ -42,6 +42,10 @@ type World struct {
 	screen_size Vector2
 }
 
+func (w *World) Init() {
+
+}
+
 func (w *World) SetScreenSize(screen_size Vector2)         { w.screen_size = screen_size }
 func (w *World) GetScreenSize(screen_size Vector2) Vector2 { return w.screen_size }
 
@@ -57,6 +61,7 @@ func GetWorld() *World {
 			Players: make(map[string]*Player),
 			objects: list.New(),
 		}
+		world_instance.Init()
 	}
 	return world_instance
 }
