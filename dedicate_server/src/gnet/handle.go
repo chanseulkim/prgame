@@ -29,24 +29,22 @@ func ExecLockstep() {
 		msg := <-msg_queue_ch
 		copy(sending_buffer[sending_size:], msg.data)
 		sending_size += msg.size
-		now_timestamp = GetNowTimeMili()
-		duration = (now_timestamp - last_timestamp)
-		if duration <= LOCKSTEP_CNT {
-			continue
-		}
-		last_timestamp = now_timestamp
-		duration = 0
 		//나머지
 		for (sending_size != 0) && (sending_size < DGRAM_SIZE) {
+			now_timestamp = GetNowTimeMili()
+			duration = (now_timestamp - last_timestamp)
+			if duration >= LOCKSTEP_CNT {
+				break
+			}
 			select {
 			case msg := <-msg_queue_ch:
 				copy(sending_buffer[sending_size:], msg.data)
 				sending_size += msg.size
 			default:
-				broadcast(sending_buffer, sending_size)
-				sending_size = 0
+				continue
 			}
 		}
+		last_timestamp = now_timestamp
 		if sending_size > 0 {
 			broadcast(sending_buffer, sending_size)
 			sending_size = 0
@@ -77,38 +75,21 @@ func enterClient(userid string, client_addr net.Addr, pos Vector2) bool {
 	return true
 }
 
-func handleMove(x Float, y Float, action string) {
-	findFov(x, y, action)
+func handleMove(curr_x Float, curr_y Float, action string) {
+	boundingSphere(curr_x, curr_y, action)
+
 }
 
-func findFov(x Float, y Float, action string) {
-	if action == "ui_left" {
+// 원형
+func boundingSphere(curr_x Float, curr_y Float, action string) {
 
-	} else if action == "ui_right" {
-	} else if action == "ui_up" {
-
-	} else if action == "ui_down" {
-
-	}
-}
-
-func containInSight(srcx Float, srcy Float, action string) {
-	// if action == "ui_left" {
-	// 	srcx - sight_value
-	// } else if action == "ui_right" {
-	// 	srcx + sight_value
-	// } else if action == "ui_up" {
-	// 	srcy - sight_value
-	// } else if action == "ui_down" {
-	// 	srcy + sight_value
-	// }
 }
 
 func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 	buffstr := string(buf[:])
-	headers := SpliteMsg(buffstr)
-	userid := headers[0]
-	command := headers[1]
+	header := SpliteMsg(buffstr)
+	userid := header[0]
+	command := header[1]
 	if command == "ping" {
 		fmt.Println("ping pong")
 		var msg []byte = []byte{'p', 'o', 'n', 'g'}
@@ -116,15 +97,16 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 		unicast(userid, msg, msg_len)
 		return
 	} else if command == "enter" {
-		player_pos := headers[2]
+		player_pos := header[2]
 		pos_v2, _ := posStr2V2(player_pos)
 		enterClient(userid, client_addr, pos_v2)
-		// screen_size := headers[2]
+		fmt.Println("enter ", userid)
+		// screen_size := header[2]
 	} else if command == "move" {
-		action := headers[2]
-		//delta_time := headers[3]
-		//speed := headers[4]
-		pos := headers[5]
+		action := header[2]
+		//delta_time := header[3]
+		//speed := header[4]
+		pos := header[5]
 		pos_v2, _ := posStr2V2(pos)
 		player := GetWorld().Players[userid]
 		if player != nil {
@@ -133,7 +115,13 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 			fmt.Println("nil player " + userid)
 		}
 		handleMove(pos_v2.X, pos_v2.Y, action)
-		// fmt.Pintln(userid + " last pos : " + pos)
+	} else if command == "noti" {
+		if userid == "obj" {
+			objname := header[2]
+			pos := header[3]
+			pos_v2, _ := posStr2V2(pos)
+			GetWorld().AddObject(&GObject{Name: objname, Position: pos_v2})
+		}
 	}
 	msg_queue_ch <- NewMsgBuff(buf, uint32(buf_len))
 }

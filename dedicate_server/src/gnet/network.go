@@ -36,7 +36,7 @@ func unicast(userid string, buf []byte, buf_len int) {
 	}
 }
 
-func MakeUDPServer(server_ip string, server_port int) net.Addr {
+func RunUDPServer(server_ip string, server_port int) net.Addr {
 	serv_addr := server_ip + ":" + strconv.Itoa(server_port)
 	var err error
 	server, err = net.ListenPacket("udp", serv_addr)

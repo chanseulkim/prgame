@@ -3,7 +3,8 @@ package gcore
 type Float float32
 
 type GObject struct {
-	Position []Vector2
+	Name     string
+	Position Vector2
 }
 
 type Vector2 struct {

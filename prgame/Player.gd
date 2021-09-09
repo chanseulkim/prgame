@@ -22,13 +22,12 @@ func _parse_msg(msg):
 	while true:
 		var f1 = msg.find(';')
 		if f1 == -1:
-			return ret
+			break
 		var data = msg.substr(0, f1)
 		msg = msg.substr(f1+1)
 		header.push_back(data)
 		if data == "m":
 			ret.push_back(header)
-			break
 	return ret
 
 func _process_msg(msg):
@@ -75,6 +74,8 @@ func _process_msg(msg):
 			_handle_move_msg(user_id, action, delta_time)
 
 func _handle_move_msg(user_id, action, delta_time):
+	if user_id == name : 
+		return
 	var velocity = Vector2()  # The player's movement vector.
 	if action == "ui_right":
 		velocity.x += 1
@@ -87,7 +88,6 @@ func _handle_move_msg(user_id, action, delta_time):
 	if velocity.length() > 0:
 		velocity = velocity.normalized() * speed
 	var player = Network.get_player(user_id)
-	var c = $'/root/world'.get_child()
 	var delta = delta_time.to_float()
 	player.position += velocity * delta
 	player.position.x = clamp(player.position.x, 0, screen_size.x)
@@ -127,14 +127,12 @@ func _process(delta):
 	if velocity.length() > 0:
 		velocity = velocity.normalized() * speed
 		$AnimatedSprite.play()
-	else:
-		$AnimatedSprite.stop()
-		
-	if velocity.length() > 0:
 		position += velocity * delta
 		position.x = clamp(position.x, 0, screen_size.x)
 		position.y = clamp(position.y, 0, screen_size.y)
-	
+	else:
+		$AnimatedSprite.stop()
+		
 	if velocity.x != 0:
 		$AnimatedSprite.animation = "walk"
 		$AnimatedSprite.flip_v = false

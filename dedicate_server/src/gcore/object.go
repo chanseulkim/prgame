@@ -1,6 +1,7 @@
 package gcore
 
 import (
+	"container/list"
 	"fmt"
 	"net"
 )
@@ -36,19 +37,26 @@ func NewPlayer(uid string, address net.Addr, position Vector2, colision_radius F
 
 type World struct {
 	Players     map[string]*Player // addr, player
-	Objects     []*GObject
-	Position    Vector2
+	objects     *list.List
+	position    Vector2
 	screen_size Vector2
 }
 
 func (w *World) SetScreenSize(screen_size Vector2)         { w.screen_size = screen_size }
 func (w *World) GetScreenSize(screen_size Vector2) Vector2 { return w.screen_size }
 
+func (w *World) AddObject(object *GObject) {
+	w.objects.PushBack(object)
+}
+
 var world_instance *World
 
 func GetWorld() *World {
 	if world_instance == nil {
-		world_instance = &World{Players: make(map[string]*Player)}
+		world_instance = &World{
+			Players: make(map[string]*Player),
+			objects: list.New(),
+		}
 	}
 	return world_instance
 }
