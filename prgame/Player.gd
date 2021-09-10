@@ -30,6 +30,9 @@ func _parse_msg(msg):
 			ret.push_back(header)
 	return ret
 
+var showing_objs = []
+var enemy
+
 func _process_msg(msg):
 	var headers = _parse_msg(msg)
 	if headers == null:
@@ -39,6 +42,21 @@ func _process_msg(msg):
 			continue
 		var user_id = String(header[0])
 		var command = String(header[1])
+		if (command == "objects"):
+			var obj_name = header[2]
+			if obj_name == "enemy":
+				if enemy != null:
+					enemy.show()
+					continue
+				enemy = load('res://Enemy.tscn').instance()
+				enemy.name = "enemy"
+				var pos_str = header[3]
+				var pos = posstr2pos(pos_str)
+				enemy.init(pos.x, pos.y)
+				print("enemy: "+ header[2] + "," + pos_str)
+				$'/root/world'.add_child(enemy)
+			elif enemy != null:
+				enemy.hide()
 		if (command == "sync"):
 			if user_id == name:
 				continue
@@ -47,12 +65,10 @@ func _process_msg(msg):
 			var x = default_pos_x
 			var y = default_pos_y
 			var pos_str = String(header[2])
+			var pos = posstr2pos(pos_str)
 			if len(pos_str) != 0:
-				var trimedpos = pos_str.substr(1, len(pos_str))
-				var p = trimedpos.find(",")
-				if p != -1:
-					x = trimedpos.substr(0, p).to_float()
-					y = trimedpos.substr(p+1).to_float()
+				x = pos.x
+				y = pos.y
 			var new_player = load('res://Player.tscn').instance()
 			new_player.name = user_id
 			new_player.init(x, y, true)
@@ -128,6 +144,7 @@ func _process(delta):
 		velocity = velocity.normalized() * speed
 		$AnimatedSprite.play()
 		position += velocity * delta
+#		print(position)
 		position.x = clamp(position.x, 0, screen_size.x)
 		position.y = clamp(position.y, 0, screen_size.y)
 	else:
@@ -148,21 +165,12 @@ func _process(delta):
 		Network.send(pac)
 	pass
 
-
-signal timer_end
-
-func _wait( seconds ):
-	self._create_timer(self, seconds, true, "_emit_timer_end_signal")
-	yield(self,"timer_end")
-
-func _emit_timer_end_signal():
-	emit_signal("timer_end")
-
-func _create_timer(object_target, float_wait_time, bool_is_oneshot, string_function):
-	var timer = Timer.new()
-	timer.set_one_shot(bool_is_oneshot)
-	timer.set_timer_process_mode(0)
-	timer.set_wait_time(float_wait_time)
-	timer.connect("timeout", object_target, string_function)
-	self.add_child(timer)
-	timer.start()
+func posstr2pos(pos_str):
+	var v = Vector2(0, 0)
+	if len(pos_str) != 0:
+		var trimedpos = pos_str.substr(1, len(pos_str))
+		var p = trimedpos.find(",")
+		if p != -1:
+			v.x = trimedpos.substr(0, p).to_float()
+			v.y = trimedpos.substr(p+1).to_float()
+	return v

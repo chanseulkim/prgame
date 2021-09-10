@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://Enemy.gd" type="Script" id=1]
+[ext_resource path="res://dodge_assets/art/enemySwimming_1.png" type="Texture" id=2]
+
+[node name="Sprite" type="Sprite"]
+position = Vector2( 794, 175 )
+texture = ExtResource( 2 )
+script = ExtResource( 1 )

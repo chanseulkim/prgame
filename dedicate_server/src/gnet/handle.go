@@ -11,6 +11,8 @@ import (
 	. "dedicate_server/gcore"
 )
 
+const circle_radius int = 200
+
 var msg_queue_ch = make(chan *MsgBuff)
 
 const FPS = 60
@@ -75,14 +77,35 @@ func enterClient(userid string, client_addr net.Addr, pos Vector2) bool {
 	return true
 }
 
-func handleMove(curr_x Float, curr_y Float, action string) {
-	boundingSphere(curr_x, curr_y, action)
-
+func handleMove(curr_x Float, curr_y Float, action string) *GObject {
+	return boundingSphere(int(curr_x), int(curr_y), action)
 }
 
-// 원형
-func boundingSphere(curr_x Float, curr_y Float, action string) {
+func boundingSphere(curr_x int, curr_y int, action string) *GObject {
+	// var area = GetWorld().GetMapArea()
 
+	work := func() *GObject {
+		var objs = GetWorld().GetObjects()
+		for _, obj := range objs {
+			l := curr_x - circle_radius
+			r := curr_x + circle_radius
+			if (int(obj.Position.X) >= l) && (int(obj.Position.X) <= r) {
+				t := curr_y - circle_radius
+				b := curr_y + circle_radius
+				if (int(obj.Position.Y) >= t) && (int(obj.Position.Y) <= b) {
+					return obj
+				}
+			}
+		}
+		return nil
+	}
+
+	obj := work()
+	if obj != nil {
+		fmt.Println(obj.Name)
+		return obj
+	}
+	return nil
 }
 
 func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
@@ -114,7 +137,14 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 		} else {
 			fmt.Println("nil player " + userid)
 		}
-		handleMove(pos_v2.X, pos_v2.Y, action)
+		detected_obj := handleMove(pos_v2.X, pos_v2.Y, action)
+		if detected_obj != nil {
+			msg := "noti;objects;" + detected_obj.Name + ";" + v2Str(detected_obj.Position) + ";m;"
+			unicast(userid, []byte(msg), len(msg))
+		} else {
+			msg := "noti;objects;m;"
+			unicast(userid, []byte(msg), len(msg))
+		}
 	} else if command == "noti" {
 		if userid == "obj" {
 			objname := header[2]
@@ -138,4 +168,7 @@ func posStr2V2(str string) (Vector2, error) {
 	y, _ := strconv.ParseFloat(str[p+len(tok):], 32)
 	v := Vector2{Float(x), Float(y)}
 	return v, nil
+}
+func v2Str(v Vector2) string {
+	return "(" + strconv.Itoa(int(v.X)) + ", " + strconv.Itoa(int(v.Y)) + ")"
 }
