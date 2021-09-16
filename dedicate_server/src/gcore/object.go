@@ -34,17 +34,6 @@ func (p *Player) UpdatePos(new_pos Vector2) { p.position = new_pos }
 
 type Area [][]string
 
-// TODO: 좌표값은 Float이고 배열은 정수 index인데, 어떻게 배열로 처리해야할지..
-type GameMap struct {
-	area Area
-}
-
-// TODO: collision shape를 등록해야함
-func (m *GameMap) AddObject(obj *GObject) {
-	m.area[int(obj.Position.X)][int(obj.Position.Y)] = obj.Name
-}
-func (m *GameMap) GetArea() Area { return m.area }
-
 func NewGameMap(x int, y int) GameMap {
 	var new_space = make(Area, x)
 	for i := range new_space {
@@ -58,7 +47,6 @@ func NewGameMap(x int, y int) GameMap {
 type World struct {
 	Players     map[string]*Player // addr, player
 	objects     []*GObject
-	position    Vector2
 	screen_size Vector2
 	world_map   GameMap
 }
