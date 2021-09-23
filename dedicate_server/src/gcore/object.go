@@ -14,6 +14,12 @@ const (
 	DEFAULT_SIGHT_LEN       Float = 20.0
 )
 
+type GObject struct {
+	Name           string
+	Pos            Vector2
+	ColisionRadius Rectangle
+}
+
 type Player struct {
 	Uid             string
 	Addr            net.Addr
@@ -34,12 +40,12 @@ func (p *Player) UpdatePos(new_pos Vector2) { p.position = new_pos }
 
 type Area [][]string
 
-func NewGameMap(x int, y int) GameMap {
+func NewGameMap(x int, y int) *GameMap {
 	var new_space = make(Area, x)
 	for i := range new_space {
 		new_space[i] = make([]string, y)
 	}
-	return GameMap{
+	return &GameMap{
 		area: new_space,
 	}
 }
@@ -65,7 +71,7 @@ func (w *World) Init() {
 	w.world_map = NewGameMap(int(w.screen_size.X), int(w.screen_size.Y))
 
 	w.AddObject(
-		&GObject{Name: "enemy", Position: Vector2{400, 300}},
+		&GObject{Name: "enemy", Pos: Vector2{400, 300}},
 	)
 
 }

@@ -89,10 +89,10 @@ func boundingSphere(curr_x int, curr_y int, action string) *GObject {
 		for _, obj := range objs {
 			l := curr_x - circle_radius
 			r := curr_x + circle_radius
-			if (int(obj.Position.X) >= l) && (int(obj.Position.X) <= r) {
+			if (int(obj.Pos.X) >= l) && (int(obj.Pos.X) <= r) {
 				t := curr_y - circle_radius
 				b := curr_y + circle_radius
-				if (int(obj.Position.Y) >= t) && (int(obj.Position.Y) <= b) {
+				if (int(obj.Pos.Y) >= t) && (int(obj.Pos.Y) <= b) {
 					return obj
 				}
 			}
@@ -139,7 +139,7 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 		}
 		detected_obj := handleMove(pos_v2.X, pos_v2.Y, action)
 		if detected_obj != nil {
-			msg := "noti;objects;" + detected_obj.Name + ";" + v2Str(detected_obj.Position) + ";m;"
+			msg := "noti;objects;" + detected_obj.Name + ";" + v2Str(detected_obj.Pos) + ";m;"
 			unicast(userid, []byte(msg), len(msg))
 		} else {
 			msg := "noti;objects;m;"
@@ -150,7 +150,7 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 			objname := header[2]
 			pos := header[3]
 			pos_v2, _ := posStr2V2(pos)
-			GetWorld().AddObject(&GObject{Name: objname, Position: pos_v2})
+			GetWorld().AddObject(&GObject{Name: objname, Pos: pos_v2})
 		}
 	}
 	msg_queue_ch <- NewMsgBuff(buf, uint32(buf_len))

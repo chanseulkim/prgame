@@ -2,21 +2,24 @@ package gcore
 
 type Float float32
 
-type GObject struct {
-	Name     string
-	Position Vector2
-}
+type Point Vector2
 
 type Vector2 struct {
 	X, Y Float
 }
+
 type Vector3 struct {
 	X, Y, Z Float
 }
 
 type Rectangle struct {
-	StartX, StartY Float
-	EndX, EndY     Float
+	/*
+		TopLeft ┌─────┐
+			    │     │
+			    └─────┘ BotRight
+	*/
+	TopLeft  Vector2
+	BotRight Vector2
 }
 
 //type Square struct {}
