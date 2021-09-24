@@ -6,10 +6,6 @@ type Vector2 struct {
 	X, Y Float
 }
 
-type Vector3 struct {
-	X, Y, Z Float
-}
-
 /*
 	TopLeft ┌─────┐
 		    │     │
@@ -29,7 +25,9 @@ type GObject struct {
 
 func NewGObject(id int, name string, pos Vector2, radius Float) *GObject {
 	return &GObject{
-		Pos: Vector2{pos.X, pos.Y},
+		Id:   id,
+		Name: name,
+		Pos:  Vector2{pos.X, pos.Y},
 		CollisionArea: Rectangle{
 			TopLeft:  Vector2{X: pos.X - radius, Y: pos.Y - radius},
 			BotRight: Vector2{X: pos.X + radius, Y: pos.Y + radius},

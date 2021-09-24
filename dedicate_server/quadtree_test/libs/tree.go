@@ -177,23 +177,33 @@ func (self *QuadNode) GetNear(target_obj *GObject) []*GObject {
 	tlp := self.topleft_pnt
 	brp := self.botright_pnt
 	if (math.Abs(float64(tlp.X-brp.X)) <= LEAST_BLOCKSIZE) &&
-		math.Abs(float64(tlp.Y-brp.Y)) <= LEAST_BLOCKSIZE {
+		(math.Abs(float64(tlp.Y-brp.Y)) <= LEAST_BLOCKSIZE) {
 		return self.obj
 	}
 
-	if target_obj.Pos.X < (tlp.X+brp.X)/2 { // left
-		if target_obj.Pos.Y < (tlp.Y+brp.Y)/2 { // top left
-			self.TopLeft.GetNear(target_obj)
+	var ret []*GObject
+
+	x := target_obj.Pos.X
+	y := target_obj.Pos.Y
+	var near []*GObject
+	if x < (tlp.X+brp.X)/2 { // left
+		if y < (tlp.Y+brp.Y)/2 { // top left
+			near = self.TopLeft.GetNear(target_obj)
 		} else { // bottom left
-			self.BottomLeft.GetNear(target_obj)
+			near = self.BottomLeft.GetNear(target_obj)
 		}
 	} else { // right
 		if target_obj.Pos.Y <= (tlp.Y+brp.Y)/2 { // top right
-			self.TopRight.GetNear(target_obj)
+			near = self.TopRight.GetNear(target_obj)
 		} else { // bottom right
-			self.BottomRight.GetNear(target_obj)
+			near = self.BottomRight.GetNear(target_obj)
 		}
 	}
+	if near != nil {
+		ret = append(ret, near...)
+	}
+
+	return nil
 }
 
 func whereBlock(x int, y int, grid_r int, clen int) int {

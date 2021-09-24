@@ -15,10 +15,22 @@ const (
 )
 
 type GObject struct {
-	Id             int
-	Name           string
-	Pos            Vector2
-	ColisionRadius Rectangle
+	Id            int
+	Name          string
+	Pos           Vector2
+	CollisionArea Rectangle
+}
+
+func NewGObject(id int, name string, pos Vector2, radius Float) *GObject {
+	return &GObject{
+		Id:   id,
+		Name: name,
+		Pos:  Vector2{pos.X, pos.Y},
+		CollisionArea: Rectangle{
+			TopLeft:  Vector2{X: pos.X - radius, Y: pos.Y - radius},
+			BotRight: Vector2{X: pos.X + radius, Y: pos.Y + radius},
+		},
+	}
 }
 
 type Player struct {
@@ -55,7 +67,7 @@ type World struct {
 	Players     map[string]*Player // addr, player
 	objects     []*GObject
 	screen_size Vector2
-	world_map   GameMap
+	world_map   *GameMap
 }
 
 func (w *World) AddObject(object *GObject) {
@@ -69,7 +81,9 @@ func (w *World) GetMapArea() Area { return w.world_map.GetArea() }
 func (w *World) GetObjects() []*GObject { return w.objects }
 
 func (w *World) Init() {
-	w.world_map = NewGameMap(int(w.screen_size.X), int(w.screen_size.Y))
+	c := int(w.screen_size.X)
+	r := int(w.screen_size.Y)
+	w.world_map = NewGameMap(c, r)
 
 	w.AddObject(
 		&GObject{Name: "enemy", Pos: Vector2{400, 300}},

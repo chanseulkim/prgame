@@ -1,13 +1,13 @@
 package main
 
 import (
-	"fmt"
 	. "pr/libs"
 )
 
-func main() {
-	// var grid [][]int
-	grid := make([][]int, 8)
+var grid [][]int
+
+func init_grid() {
+	grid = make([][]int, 8)
 	for i := 0; i < len(grid); i++ {
 		grid[i] = make([]int, 8)
 	}
@@ -20,12 +20,11 @@ func main() {
 	grid[4][3] = 1
 	grid[5][2] = 1
 	grid[5][3] = 1
+}
 
-	quad_tree := ConstructQuadTree(grid)
-	fmt.Println(quad_tree)
-	// new_obj := NewGObject(1, "user", Vector2{X: 5, Y: 2}, 1)
-	// quad_tree.Insert(new_obj)
+var quad_tree *QuadNode
 
+func test_insert() {
 	topleft_topleft := NewGObject(1, "user", Vector2{X: 1, Y: 1}, 1)
 	quad_tree.Insert(topleft_topleft)
 
@@ -37,5 +36,19 @@ func main() {
 
 	topleft_botright := NewGObject(1, "user", Vector2{X: 2, Y: 2}, 1)
 	quad_tree.Insert(topleft_botright)
+}
+func test_search() {
+	new_obj := NewGObject(1, "user", Vector2{X: 5, Y: 2}, 1)
+	quad_tree.Insert(new_obj)
+}
+func main() {
+	init_grid()
+	quad_tree = ConstructQuadTree(grid)
+	// fmt.Println(quad_tree)
+
+	//test_insert()
+
+	// new_obj := NewGObject(1, "user", Vector2{X: 5, Y: 2}, 1)
+	// quad_tree.Insert(new_obj)
 
 }
