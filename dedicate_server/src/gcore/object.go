@@ -15,6 +15,7 @@ const (
 )
 
 type GObject struct {
+	Id             int
 	Name           string
 	Pos            Vector2
 	ColisionRadius Rectangle

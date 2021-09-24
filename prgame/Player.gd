@@ -30,7 +30,7 @@ func _parse_msg(msg):
 			ret.push_back(header)
 	return ret
 
-var showing_objs = []
+var having_objs = []
 var enemy
 
 func _process_msg(msg):
@@ -55,6 +55,7 @@ func _process_msg(msg):
 				enemy.init(pos.x, pos.y)
 				print("enemy: "+ header[2] + "," + pos_str)
 				$'/root/world'.add_child(enemy)
+				having_objs[obj_name] = enemy
 			elif enemy != null:
 				enemy.hide()
 		if (command == "sync"):

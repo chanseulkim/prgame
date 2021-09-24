@@ -1,14 +1,7 @@
-package gcore
+package libs
 
 import (
 	"math"
-)
-
-const (
-	NODE_TOPLEFT int = 0
-	NODE_TOPRIGHT
-	NODE_BOTTOMLEFT
-	NODE_BOTTOMRIGHT
 )
 
 type QuadNode struct {
@@ -164,39 +157,5 @@ func (self *QuadNode) Insert(new_obj *GObject) {
 			self.BottomRight.Insert(new_obj)
 		}
 	}
-}
 
-func (self *QuadNode) Search(r int, c int, rlen int, clen int, node *QuadNode) {
-	if !node.IsLeaf {
-		whereBlock(r, c, rlen, clen)
-	}
 }
-func whereBlock(r int, c int, rlen int, clen int) int {
-	if (r < (rlen / 2)) && (c < (clen / 2)) {
-		return NODE_TOPLEFT
-	} else if (r < (rlen / 2)) && (c >= (clen / 2)) {
-		return NODE_TOPRIGHT
-	} else if (r >= (rlen / 2)) && (c < (clen / 2)) {
-		return NODE_BOTTOMLEFT
-	} else if (r >= (rlen / 2)) && (c >= (clen / 2)) {
-		return NODE_TOPRIGHT
-	}
-	return -1
-}
-
-// TODO: 좌표값은 Float이고 배열은 정수 index인데, 어떻게 배열로 처리해야할지..
-type GameMap struct {
-	area     Area
-	grid     [][]int
-	quadTree *QuadNode
-}
-
-func (g *GameMap) Init() {
-	g.quadTree = ConstructQuadTree(g.grid)
-}
-
-// TODO: collision shape를 등록해야함
-func (m *GameMap) AddObject(obj *GObject) {
-	m.area[int(obj.Pos.X)][int(obj.Pos.Y)] = obj.Name
-}
-func (m *GameMap) GetArea() Area { return m.area }

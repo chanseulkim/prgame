@@ -2,8 +2,6 @@ package gcore
 
 type Float float32
 
-type Point Vector2
-
 type Vector2 struct {
 	X, Y Float
 }
