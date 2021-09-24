@@ -1,3 +1,3 @@
-module dedicate_server
+module m
 
 go 1.17

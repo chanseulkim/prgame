@@ -4,6 +4,14 @@ import (
 	"math"
 )
 
+const LEAST_BLOCKSIZE = 1
+const (
+	NODE_TOPLEFT int = 0
+	NODE_TOPRIGHT
+	NODE_BOTTOMLEFT
+	NODE_BOTTOMRIGHT
+)
+
 type QuadNode struct {
 	Id            int
 	IsLeaf        bool
@@ -69,18 +77,17 @@ func (self *QuadNode) append_object(new_obj *GObject) {
 }
 
 func (self *QuadNode) Insert(new_obj *GObject) {
-	var inBoundary = func(obj *GObject) bool {
-		var p = obj.Pos
+	var inBoundary = func(p Vector2) bool {
 		return (p.X >= self.topleft_pnt.X && p.X <= self.botright_pnt.X &&
 			p.Y >= self.topleft_pnt.Y && p.Y <= self.botright_pnt.Y)
 	}
-	if !inBoundary(new_obj) {
+	if !inBoundary(new_obj.Pos) {
 		return
 	}
 	tlp := self.topleft_pnt
 	brp := self.botright_pnt
-	if (math.Abs(float64(tlp.X-brp.X)) <= 1) &&
-		math.Abs(float64(tlp.Y-brp.Y)) <= 1 {
+	if (math.Abs(float64(tlp.X-brp.X)) <= LEAST_BLOCKSIZE) &&
+		math.Abs(float64(tlp.Y-brp.Y)) <= LEAST_BLOCKSIZE {
 		self.append_object(new_obj)
 		self.IsLeaf = true
 		return
@@ -157,5 +164,39 @@ func (self *QuadNode) Insert(new_obj *GObject) {
 			self.BottomRight.Insert(new_obj)
 		}
 	}
+}
 
+func (self *QuadNode) GetNear(target_obj *GObject) []*GObject {
+	var inBoundary = func(p Vector2) bool {
+		return (p.X >= self.topleft_pnt.X && p.X <= self.botright_pnt.X &&
+			p.Y >= self.topleft_pnt.Y && p.Y <= self.botright_pnt.Y)
+	}
+	if !inBoundary(target_obj.Pos) {
+		return nil
+	}
+	tlp := self.topleft_pnt
+	brp := self.botright_pnt
+	if (math.Abs(float64(tlp.X-brp.X)) <= LEAST_BLOCKSIZE) &&
+		math.Abs(float64(tlp.Y-brp.Y)) <= LEAST_BLOCKSIZE {
+		return self.obj
+	}
+
+	if target_obj.Pos.X < (tlp.X+brp.X)/2 { // left
+		if target_obj.Pos.Y < (tlp.Y+brp.Y)/2 { // top left
+			self.TopLeft.GetNear(target_obj)
+		} else { // bottom left
+			self.BottomLeft.GetNear(target_obj)
+		}
+	} else { // right
+		if target_obj.Pos.Y <= (tlp.Y+brp.Y)/2 { // top right
+			self.TopRight.GetNear(target_obj)
+		} else { // bottom right
+			self.BottomRight.GetNear(target_obj)
+		}
+	}
+}
+
+func whereBlock(x int, y int, grid_r int, clen int) int {
+
+	return -1
 }
