@@ -6,68 +6,28 @@ import (
 
 const LEAST_BLOCKSIZE = 1
 const (
-	NODE_TOPLEFT     = 0
-	NODE_TOPRIGHT    = 1
-	NODE_BOTTOMLEFT  = 2
-	NODE_BOTTOMRIGHT = 3
-	NODE_ROOT        = 4
+	NODE_ROOT        int = 0
+	NODE_TOPLEFT         = 1
+	NODE_TOPRIGHT        = 2
+	NODE_BOTTOMLEFT      = 3
+	NODE_BOTTOMRIGHT     = 4
 )
 
 type QuadNode struct {
 	Id            int
-	is_leaf       bool
+	IsLeaf        bool
 	Width, Height int
 	topleft_pnt   Vector2
 	botright_pnt  Vector2
-	objs          []*GObject
-	NodeSector    int
+
+	obj []*GObject
 
 	TopLeft     *QuadNode
 	TopRight    *QuadNode
 	BottomLeft  *QuadNode
 	BottomRight *QuadNode
-	Parent      *QuadNode
-}
-
-func (self *QuadNode) IsLeaf() bool {
-	return (self.TopLeft == nil) &&
-		(self.TopRight == nil) &&
-		(self.BottomLeft == nil) &&
-		(self.BottomRight == nil)
-}
-
-// 자식 노드들이 가진 모든 오브젝트들 반환
-func (self *QuadNode) GetAllObjects() []*GObject {
-	var objs []*GObject = self.objs
-	if self.TopLeft != nil {
-		if !self.TopLeft.IsLeaf() {
-			objs = append(objs, self.TopLeft.GetAllObjects()...)
-		} else {
-			objs = append(objs, self.TopLeft.objs...)
-		}
-	}
-	if self.TopRight != nil {
-		if !self.TopRight.IsLeaf() {
-			objs = append(objs, self.TopRight.GetAllObjects()...)
-		} else {
-			objs = append(objs, self.TopRight.objs...)
-		}
-	}
-	if self.BottomLeft != nil {
-		if !self.BottomLeft.IsLeaf() {
-			objs = append(objs, self.BottomLeft.GetAllObjects()...)
-		} else {
-			objs = append(objs, self.BottomLeft.objs...)
-		}
-	}
-	if self.BottomRight != nil {
-		if !self.BottomLeft.IsLeaf() {
-			objs = append(objs, self.BottomRight.GetAllObjects()...)
-		} else {
-			objs = append(objs, self.BottomRight.objs...)
-		}
-	}
-	return objs
+	Prev        *QuadNode
+	NodeSector  int
 }
 
 func ConstructQuadTree(grid [][]int) *QuadNode {
@@ -89,23 +49,23 @@ func ConstructQuadTree(grid [][]int) *QuadNode {
 		if isleaf() {
 			return &QuadNode{
 				Id:           val,
-				is_leaf:      true,
+				IsLeaf:       true,
 				Width:        endc - startc,
 				Height:       endr - startr,
 				topleft_pnt:  tlp,
 				botright_pnt: brp,
-				Parent:       prev,
+				Prev:         prev,
 				NodeSector:   node_sector,
 			}
 		}
 		new_node := &QuadNode{
 			Id:           val,
-			is_leaf:      false,
+			IsLeaf:       false,
 			Width:        endc - startc,
 			Height:       endr - startr,
 			topleft_pnt:  tlp,
 			botright_pnt: brp,
-			Parent:       prev,
+			Prev:         prev,
 			NodeSector:   node_sector,
 		}
 		prev = new_node
@@ -121,7 +81,7 @@ func ConstructQuadTree(grid [][]int) *QuadNode {
 }
 
 func (self *QuadNode) append_object(new_obj *GObject) {
-	self.objs = append(self.objs, new_obj)
+	self.obj = append(self.obj, new_obj)
 }
 
 func (self *QuadNode) Insert(new_obj *GObject) {
@@ -137,6 +97,7 @@ func (self *QuadNode) Insert(new_obj *GObject) {
 	if (math.Abs(float64(tlp.X-brp.X)) <= LEAST_BLOCKSIZE) &&
 		math.Abs(float64(tlp.Y-brp.Y)) <= LEAST_BLOCKSIZE {
 		self.append_object(new_obj)
+		self.IsLeaf = true
 		return
 	}
 
@@ -154,13 +115,12 @@ func (self *QuadNode) Insert(new_obj *GObject) {
 					},
 					Width:      self.Width / 2,
 					Height:     self.Height / 2,
-					is_leaf:    true,
+					IsLeaf:     false,
 					Id:         new_obj.Id,
 					NodeSector: NODE_TOPLEFT,
-					Parent:     self,
+					Prev:       self,
 				}
 			}
-			self.is_leaf = false
 			self.TopLeft.Insert(new_obj)
 		} else { // bottom left
 			if self.BottomLeft == nil {
@@ -175,18 +135,17 @@ func (self *QuadNode) Insert(new_obj *GObject) {
 					},
 					Width:      self.Width / 2,
 					Height:     self.Height / 2,
-					is_leaf:    true,
+					IsLeaf:     false,
 					Id:         new_obj.Id,
 					NodeSector: NODE_BOTTOMLEFT,
-					Parent:     self,
+					Prev:       self,
 				}
 			}
-			self.is_leaf = false
 			self.BottomLeft.Insert(new_obj)
 		}
 	} else { // right
 		if new_obj.Pos.Y <= (tlp.Y+brp.Y)/2 { // top right
-			if self.TopRight == nil {
+			if (self.TopRight == nil) || (self.TopRight.IsLeaf) {
 				self.TopRight = &QuadNode{
 					topleft_pnt: Vector2{
 						((self.topleft_pnt.X + self.botright_pnt.X + 1) / 2),
@@ -198,16 +157,15 @@ func (self *QuadNode) Insert(new_obj *GObject) {
 					},
 					Width:      self.Width / 2,
 					Height:     self.Height / 2,
-					is_leaf:    true,
+					IsLeaf:     false,
 					Id:         new_obj.Id,
 					NodeSector: NODE_TOPRIGHT,
-					Parent:     self,
+					Prev:       self,
 				}
 			}
-			self.is_leaf = false
 			self.TopRight.Insert(new_obj)
 		} else { // bottom right
-			if self.BottomRight == nil {
+			if (self.BottomRight == nil) || (self.BottomRight.IsLeaf) {
 				self.BottomRight = &QuadNode{
 					topleft_pnt: Vector2{
 						(self.topleft_pnt.X + self.botright_pnt.X + 1) / 2,
@@ -219,13 +177,12 @@ func (self *QuadNode) Insert(new_obj *GObject) {
 					},
 					Width:      self.Width / 2,
 					Height:     self.Height / 2,
-					is_leaf:    true,
+					IsLeaf:     false,
 					Id:         new_obj.Id,
 					NodeSector: NODE_BOTTOMRIGHT,
-					Parent:     self,
+					Prev:       self,
 				}
 			}
-			self.is_leaf = false
 			self.BottomRight.Insert(new_obj)
 		}
 	}
@@ -256,26 +213,37 @@ func (self *QuadNode) search_task(lev int, target_obj *GObject, prev_node *QuadN
 		(math.Abs(float64(tlp.Y-brp.Y)) <= LEAST_BLOCKSIZE) {
 		//TODO: check near sections object
 		//TODO: 지금은 상하좌우만 확인중.. 대각선 확인 필요(원형)
-		over_radius := (target_obj.Pos.Y - target_obj.SightRadius)
-		if over_radius < self.topleft_pnt.Y {
+		sight_radius := (target_obj.Pos.Y - target_obj.SightRadius)
+		if sight_radius < self.topleft_pnt.Y {
 			// 위 노드로 넘어감
 			curr_sector := self.NodeSector
-			parent := self.Parent
+			prev := self.Prev
 			if curr_sector == NODE_TOPLEFT { // 좌상단이라면..
-				NearestTopLeft(self, objects)
-			} else if curr_sector == NODE_TOPRIGHT { // 우상단이라면..
-				if parent.NodeSector == NODE_BOTTOMLEFT {
-					parent = parent.Parent.TopLeft
-				} else if parent.NodeSector == NODE_BOTTOMRIGHT {
-					parent = parent.Parent.TopRight
+				if prev.NodeSector == NODE_BOTTOMLEFT {
+					prev = prev.Prev.TopLeft
+				} else if prev.NodeSector == NODE_BOTTOMRIGHT {
+					prev = prev.Prev.TopRight
+				} else { // 더 상위로..
+					prev = prev.Prev.TopRight
 				}
-				if parent != nil {
-					if parent.BottomLeft != nil {
-						*objects = append(*objects, parent.BottomLeft.objs...)
+				if prev != nil {
+					if prev.BottomLeft != nil {
+						*objects = append(*objects, prev.BottomLeft.obj...)
+					}
+				}
+			} else if curr_sector == NODE_TOPRIGHT { // 우상단이라면..
+				if prev.NodeSector == NODE_BOTTOMLEFT {
+					prev = prev.Prev.TopLeft
+				} else if prev.NodeSector == NODE_BOTTOMRIGHT {
+					prev = prev.Prev.TopRight
+				}
+				if prev != nil {
+					if prev.BottomLeft != nil {
+						*objects = append(*objects, prev.BottomLeft.obj...)
 					}
 				}
 			} else if curr_sector == NODE_BOTTOMLEFT {
-				*objects = append(*objects, prev_node.TopLeft.objs...)
+				*objects = append(*objects, prev_node.TopLeft.obj...)
 			}
 
 		}
