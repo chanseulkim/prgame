@@ -57,26 +57,19 @@ func test_search() {
 
 	near := quad_tree.NearPosition(new_obj.Pos, new_obj.SightRadius)
 	fmt.Println(near)
+}
+func test_move() {
+	usr := NewGObject(1, "usr1", Vector2{X: 4, Y: 4}, sight_radius)
+	quad_tree.Insert(usr)
 
+	quad_tree.Move(usr.Pos, usr.Id, Vector2{X: 3, Y: 4})
 }
-func rm(v **int) {
-	*v = nil
-}
+
 func main() {
-	var buff []*int = make([]*int, 10)
-	buff[0] = new(int)
-	*buff[0] = 1
-	buff[1] = new(int)
-	*buff[1] = 2
-	buff[2] = new(int)
-	*buff[2] = 3
-
-	b := &buff[1]
-	rm(b)
-
 	init_grid()
 	quad_tree = ConstructQuadTree(grid)
 
+	test_move()
 	test_search()
 	// fmt.Println(quad_tree)
 

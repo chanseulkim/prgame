@@ -1,6 +1,7 @@
 package libs
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -107,27 +108,12 @@ func ConstructQuadTree(grid [][]int) *QuadNode {
 		tlp := Vector2{X: Float(startc), Y: Float(startr)}
 		brp := Vector2{X: Float(endc - 1), Y: Float(endr - 1)}
 		if isleaf() {
-			return &QuadNode{
-				Id:           val,
-				is_leaf:      true,
-				Width:        endc - startc,
-				Height:       endr - startr,
-				topleft_pnt:  tlp,
-				botright_pnt: brp,
-				Parent:       parent,
-				NodeSector:   node_sector,
-			}
+			return NewQuadNode(val, true, endc-startc, endr-startr, tlp, brp, parent, node_sector)
 		}
-		new_node := &QuadNode{
-			Id:           val,
-			is_leaf:      false,
-			Width:        endc - startc,
-			Height:       endr - startr,
-			topleft_pnt:  tlp,
-			botright_pnt: brp,
-			Parent:       parent,
-			NodeSector:   node_sector,
-		}
+		new_node := NewQuadNode(val, false,
+			endc-startc, endr-startr,
+			tlp, brp,
+			parent, node_sector)
 		parent = new_node
 		midr := startr + (endr-startr)/2
 		midc := startc + (endc-startc)/2
@@ -163,43 +149,31 @@ func (self *QuadNode) Insert(new_obj *GObject) {
 	if new_obj.Pos.X < (tlp.X+brp.X)/2 { // left
 		if new_obj.Pos.Y < (tlp.Y+brp.Y)/2 { // top left
 			if self.TopLeft == nil {
-				self.TopLeft = &QuadNode{
-					topleft_pnt: Vector2{
-						self.topleft_pnt.X,
-						self.topleft_pnt.Y,
-					},
-					botright_pnt: Vector2{
-						((self.topleft_pnt.X + self.botright_pnt.X + 1) / 2) - 1, // 왼쪽이기때문에 마지막 -1
+				self.TopLeft = NewQuadNode(new_obj.Id, true,
+					self.Width/2, self.Height/2,
+					Vector2{self.topleft_pnt.X, self.topleft_pnt.Y},
+					Vector2{((self.topleft_pnt.X + self.botright_pnt.X + 1) / 2) - 1, // 왼쪽이기때문에 마지막 -1
 						((self.topleft_pnt.Y + self.botright_pnt.Y + 1) / 2) - 1,
 					},
-					Width:      self.Width / 2,
-					Height:     self.Height / 2,
-					is_leaf:    true,
-					Id:         new_obj.Id,
-					NodeSector: NODE_TOPLEFT,
-					Parent:     self,
-				}
+					self, NODE_TOPLEFT,
+				)
 			}
 			self.is_leaf = false
 			self.TopLeft.Insert(new_obj)
 		} else { // bottom left
 			if self.BottomLeft == nil {
-				self.BottomLeft = &QuadNode{
-					topleft_pnt: Vector2{
+				self.BottomLeft = NewQuadNode(new_obj.Id, true,
+					self.Width/2, self.Height/2,
+					Vector2{
 						self.topleft_pnt.X,
 						(self.topleft_pnt.Y + self.botright_pnt.Y + 1) / 2,
 					},
-					botright_pnt: Vector2{
+					Vector2{
 						((self.topleft_pnt.X + self.botright_pnt.X + 1) / 2) - 1,
 						self.botright_pnt.Y,
 					},
-					Width:      self.Width / 2,
-					Height:     self.Height / 2,
-					is_leaf:    true,
-					Id:         new_obj.Id,
-					NodeSector: NODE_BOTTOMLEFT,
-					Parent:     self,
-				}
+					self, NODE_BOTTOMLEFT,
+				)
 			}
 			self.is_leaf = false
 			self.BottomLeft.Insert(new_obj)
@@ -207,43 +181,34 @@ func (self *QuadNode) Insert(new_obj *GObject) {
 	} else { // right
 		if new_obj.Pos.Y <= (tlp.Y+brp.Y)/2 { // top right
 			if self.TopRight == nil {
-				self.TopRight = &QuadNode{
-					topleft_pnt: Vector2{
+				self.TopRight = NewQuadNode(new_obj.Id, true,
+					self.Width/2, self.Height/2,
+					Vector2{
 						((self.topleft_pnt.X + self.botright_pnt.X + 1) / 2),
 						self.topleft_pnt.X,
-					},
-					botright_pnt: Vector2{
+					}, Vector2{
 						self.botright_pnt.X,
 						((self.topleft_pnt.Y + self.botright_pnt.Y + 1) / 2) - 1, // 위쪽이기 때문에 마지막 -1
 					},
-					Width:      self.Width / 2,
-					Height:     self.Height / 2,
-					is_leaf:    true,
-					Id:         new_obj.Id,
-					NodeSector: NODE_TOPRIGHT,
-					Parent:     self,
-				}
+					self, NODE_TOPRIGHT,
+				)
 			}
 			self.is_leaf = false
 			self.TopRight.Insert(new_obj)
 		} else { // bottom right
 			if self.BottomRight == nil {
-				self.BottomRight = &QuadNode{
-					topleft_pnt: Vector2{
+				self.BottomRight = NewQuadNode(new_obj.Id, true,
+					self.Width/2, self.Height/2,
+					Vector2{
 						(self.topleft_pnt.X + self.botright_pnt.X + 1) / 2,
 						(self.topleft_pnt.Y + self.botright_pnt.Y + 1) / 2,
 					},
-					botright_pnt: Vector2{
+					Vector2{
 						self.botright_pnt.X,
 						self.botright_pnt.Y,
 					},
-					Width:      self.Width / 2,
-					Height:     self.Height / 2,
-					is_leaf:    true,
-					Id:         new_obj.Id,
-					NodeSector: NODE_BOTTOMRIGHT,
-					Parent:     self,
-				}
+					self, NODE_BOTTOMRIGHT,
+				)
 			}
 			self.is_leaf = false
 			self.BottomRight.Insert(new_obj)
@@ -341,28 +306,36 @@ func (self *QuadNode) search(target_pos Vector2) **QuadNode {
 	y := target_pos.Y
 	if x < (tlp.X+brp.X)/2 { // left
 		if y < (tlp.Y+brp.Y)/2 { // top left
-			self.TopLeft.search(target_pos)
+			return self.TopLeft.search(target_pos)
 		} else { // bottom left
-			self.BottomLeft.search(target_pos)
+			return self.BottomLeft.search(target_pos)
 		}
 	} else { // right
 		if target_pos.Y <= (tlp.Y+brp.Y)/2 { // top right
-			self.TopRight.search(target_pos)
+			return self.TopRight.search(target_pos)
 		} else { // bottom right
-			self.BottomRight.search(target_pos)
+			return self.BottomRight.search(target_pos)
 		}
 	}
 	return nil
 }
 
-func (self *QuadNode) Move(from_pos Vector2, from_id int, to *GObject) {
+func (self *QuadNode) Move(from_pos Vector2, from_id int, to Vector2) {
 	s := self.search(from_pos)
-	for _, o := range (*s).objs {
-		if o.Id == from_id {
-			self.Remove(&o)
+	if s == nil {
+		return
+	}
+	for i, obj := range (*s).objs {
+		if obj.Id == from_id {
+			*&obj.Pos = to
+			self.Insert(obj)
+			(*s).objs[i] = nil
 		}
 	}
-	self.Insert(to)
+	after := self.search(to)
+	if after == nil {
+		fmt.Println("s")
+	}
 }
 func (self *QuadNode) Remove(target_obj **GObject) {
 	target_obj = nil
