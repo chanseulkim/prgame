@@ -18,6 +18,7 @@ type GObject struct {
 	Id            int
 	Name          string
 	Pos           Vector2
+	SightRadius   Float
 	CollisionArea Rectangle
 }
 

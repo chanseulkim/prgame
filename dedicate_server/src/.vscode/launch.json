@@ -9,7 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "C:\\work\\games\\godot_projects\\prgame\\dedicate_server\\src\\server.go"
+            "program": "C:\\work\\games\\prgame\\dedicate_server\\src\\server.go"
         }
     ]
 }

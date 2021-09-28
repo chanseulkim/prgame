@@ -41,20 +41,39 @@ func test_insert() {
 	quad_tree.Insert(topleft_botright)
 }
 func test_search() {
-	other := NewGObject(10, "other_usr", Vector2{X: 4, Y: 3}, sight_radius)
+	other := NewGObject(1, "other_usr", Vector2{X: 4, Y: 3}, sight_radius)
 	quad_tree.Insert(other)
+	other2 := NewGObject(2, "other_usr2", Vector2{X: 3, Y: 4}, sight_radius)
+	quad_tree.Insert(other2)
 
-	new_obj := NewGObject(5, "user", Vector2{X: 4, Y: 4}, sight_radius)
+	tln := NewGObject(3, "tln", Vector2{X: 3, Y: 3}, sight_radius)
+	quad_tree.Insert(tln)
+
+	new_obj := NewGObject(4, "user", Vector2{X: 4, Y: 4}, sight_radius)
 	quad_tree.Insert(new_obj)
 
 	objall := quad_tree.GetAllObjects()
 	fmt.Println("GetAllObjects : ", len(objall))
 
-	near := quad_tree.SearchSector(new_obj)
+	near := quad_tree.NearPosition(new_obj.Pos, new_obj.SightRadius)
 	fmt.Println(near)
 
 }
+func rm(v **int) {
+	*v = nil
+}
 func main() {
+	var buff []*int = make([]*int, 10)
+	buff[0] = new(int)
+	*buff[0] = 1
+	buff[1] = new(int)
+	*buff[1] = 2
+	buff[2] = new(int)
+	*buff[2] = 3
+
+	b := &buff[1]
+	rm(b)
+
 	init_grid()
 	quad_tree = ConstructQuadTree(grid)
 
