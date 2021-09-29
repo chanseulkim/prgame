@@ -77,34 +77,35 @@ func enterClient(userid string, client_addr net.Addr, pos Vector2) bool {
 	return true
 }
 
-func handleMove(curr_x Float, curr_y Float, action string) *GObject {
-	return boundingSphere(int(curr_x), int(curr_y), action)
+func handleMove(curr_x int, curr_y int, action string) *GObject {
+	o := boundingSphere(int(curr_x), int(curr_y), action)
+	return o
 }
 
 func boundingSphere(curr_x int, curr_y int, action string) *GObject {
 	// var area = GetWorld().GetMapArea()
+	// GetWorld().Nearest()
+	// work := func() *GObject {
+	// 	var objs = GetWorld().GetObjects()
+	// 	for _, obj := range objs {
+	// 		l := curr_x - circle_radius
+	// 		r := curr_x + circle_radius
+	// 		if (int(obj.Pos.X) >= l) && (int(obj.Pos.X) <= r) {
+	// 			t := curr_y - circle_radius
+	// 			b := curr_y + circle_radius
+	// 			if (int(obj.Pos.Y) >= t) && (int(obj.Pos.Y) <= b) {
+	// 				return obj
+	// 			}
+	// 		}
+	// 	}
+	// 	return nil
+	// }
 
-	work := func() *GObject {
-		var objs = GetWorld().GetObjects()
-		for _, obj := range objs {
-			l := curr_x - circle_radius
-			r := curr_x + circle_radius
-			if (int(obj.Pos.X) >= l) && (int(obj.Pos.X) <= r) {
-				t := curr_y - circle_radius
-				b := curr_y + circle_radius
-				if (int(obj.Pos.Y) >= t) && (int(obj.Pos.Y) <= b) {
-					return obj
-				}
-			}
-		}
-		return nil
-	}
-
-	obj := work()
-	if obj != nil {
-		fmt.Println(obj.Name)
-		return obj
-	}
+	// obj := work()
+	// if obj != nil {
+	// 	fmt.Println(obj.Name)
+	// 	return obj
+	// }
 	return nil
 }
 
@@ -126,7 +127,7 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 		fmt.Println("enter ", userid)
 		// screen_size := header[2]
 	} else if command == "move" {
-		action := header[2]
+		// action := header[2]
 		//delta_time := header[3]
 		//speed := header[4]
 		pos := header[5]
@@ -137,14 +138,26 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 		} else {
 			fmt.Println("nil player " + userid)
 		}
-		detected_obj := handleMove(pos_v2.X, pos_v2.Y, action)
-		if detected_obj != nil {
-			msg := "noti;objects;" + detected_obj.Name + ";" + v2Str(detected_obj.Pos) + ";m;"
+		points := GetWorld().Nearest(player)
+		// detected_obj := handleMove(pos_v2.X, pos_v2.Y, action)
+		var msg string
+		if points == nil {
+			msg += "noti;objects;m;"
 			unicast(userid, []byte(msg), len(msg))
-		} else {
-			msg := "noti;objects;m;"
-			unicast(userid, []byte(msg), len(msg))
+			return
 		}
+		msg += "noti;objects;"
+		for _, point := range points {
+			if point != nil {
+				detected_obj := (point.Data().(string))
+				log.Printf("Found point: %s\n", detected_obj)
+				x, y := point.Coordinates()
+				msg += detected_obj + "_" + v2Str(Vector2{X: int(x), Y: int(y)}) + "@"
+			}
+		}
+		msg += ";m;"
+		unicast(userid, []byte(msg), len(msg))
+
 	} else if command == "noti" {
 		if userid == "obj" {
 			objname := header[2]
@@ -156,7 +169,7 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 	msg_queue_ch <- NewMsgBuff(buf, uint32(buf_len))
 }
 
-// "(40, 40)" -> x:40, y:40 Float Vector2
+// "(40, 40)" -> x:40, y:40 int Vector2
 func posStr2V2(str string) (Vector2, error) {
 	str = strings.Trim(str, "()")
 	tok := ", "
@@ -166,7 +179,7 @@ func posStr2V2(str string) (Vector2, error) {
 	}
 	x, _ := strconv.ParseFloat(str[:p], 32)
 	y, _ := strconv.ParseFloat(str[p+len(tok):], 32)
-	v := Vector2{Float(x), Float(y)}
+	v := Vector2{int(x), int(y)}
 	return v, nil
 }
 func v2Str(v Vector2) string {

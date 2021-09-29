@@ -14,27 +14,27 @@ var is_connected_to_server = false
 
 var is_peer = false
 
-func _parse_msg(msg):
+func _parse_msg(msg, token, endcode):
 	if len(msg) <= 0:
 		return
 	var ret = []
 	var header = []
 	while true:
-		var f1 = msg.find(';')
+		var f1 = msg.find(token)
 		if f1 == -1:
 			break
 		var data = msg.substr(0, f1)
 		msg = msg.substr(f1+1)
 		header.push_back(data)
-		if data == "m":
+		if data == endcode:
 			ret.push_back(header)
 	return ret
 
 var having_objs = []
-var enemy
+var enemies = {}
 
 func _process_msg(msg):
-	var headers = _parse_msg(msg)
+	var headers = _parse_msg(msg, ';', 'm')
 	if headers == null:
 		return
 	for header in headers:
@@ -43,21 +43,37 @@ func _process_msg(msg):
 		var user_id = String(header[0])
 		var command = String(header[1])
 		if (command == "objects"):
-			var obj_name = header[2]
-			if obj_name == "enemy":
-				if enemy != null:
-					enemy.show()
-					continue
-				enemy = load('res://Enemy.tscn').instance()
-				enemy.name = "enemy"
-				var pos_str = header[3]
-				var pos = posstr2pos(pos_str)
-				enemy.init(pos.x, pos.y)
-				print("enemy: "+ header[2] + "," + pos_str)
-				$'/root/world'.add_child(enemy)
-				having_objs[obj_name] = enemy
-			elif enemy != null:
-				enemy.hide()
+			var objs = header[2]
+			var near_nums = []
+			var poss = {}
+			while "enemy" in objs:
+				var end = objs.find('@')
+				var obj = objs.substr(0, end)
+				var objname = obj.substr(0, obj.find('_'))
+				var numstart = obj.find('_')
+				var numend = obj.rfind('_')
+				var num = int(obj.substr(numstart+1, numend-(numstart+1)))
+				var enemypos = obj.substr(numend+1)
+				near_nums.append(num)
+				poss[num] = enemypos
+				objs = objs.substr(end+1)
+				pass
+			for idx in enemies:
+				enemies[idx].hide()
+			for num in near_nums:
+				if num in enemies:
+					enemies[num].show()
+				else:
+					var enemy = load('res://Enemy.tscn').instance()
+					enemy.name = str(num)
+					var pos_str = poss[num]
+					var pos = posstr2pos(pos_str)
+					enemy.init(pos.x, pos.y)
+#					print("enemy: "+ header[2] + "," + pos_str + " " + str(pos.x) + " " + str(pos.y))
+					$'/root/world'.add_child(enemy)
+					enemies[num] = enemy
+			
+			
 		if (command == "sync"):
 			if user_id == name:
 				continue

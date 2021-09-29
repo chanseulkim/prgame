@@ -3,7 +3,7 @@ package gcore
 type Float float32
 
 type Vector2 struct {
-	X, Y Float
+	X, Y int
 }
 
 type Vector3 struct {
@@ -19,6 +19,11 @@ type Rectangle struct {
 	TopLeft  Vector2
 	BotRight Vector2
 }
+
+const (
+	ID_OBJECT = 0
+	ID_USER   = 1
+)
 
 //type Square struct {}
 //type Circle struct{}

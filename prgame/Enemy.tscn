@@ -4,6 +4,7 @@
 [ext_resource path="res://dodge_assets/art/enemySwimming_1.png" type="Texture" id=2]
 
 [node name="Sprite" type="Sprite"]
-position = Vector2( 794, 175 )
+position = Vector2( 745.5, 208.5 )
+scale = Vector2( 0.265152, 0.302083 )
 texture = ExtResource( 2 )
 script = ExtResource( 1 )
