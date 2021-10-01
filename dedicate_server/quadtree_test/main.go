@@ -2,10 +2,7 @@ package main
 
 import (
 	"fmt"
-	"log"
 	. "pr/libs"
-
-	"github.com/asim/quadtree"
 )
 
 var grid [][]int
@@ -31,28 +28,6 @@ var quad_tree *QuadNode
 var sight_radius Float = 1
 
 func qt_test() {
-	centerPoint := quadtree.NewPoint(0.0, 0.0, nil)
-	halfPoint := quadtree.NewPoint(1024, 600, nil)
-	boundingBox := quadtree.NewAABB(centerPoint, halfPoint)
-
-	qtree := quadtree.New(boundingBox, 0, nil)
-
-	point := quadtree.NewPoint(400, 300, "Berlin")
-	if !qtree.Insert(point) {
-		log.Fatal("Failed to insert the point")
-	}
-	seoulpoint := quadtree.NewPoint(51, 13, "Seoul")
-	if !qtree.Insert(seoulpoint) {
-		log.Fatal("Failed to insert the point")
-	}
-	center := quadtree.NewPoint(390, 300, nil)
-	distance := 10000000 /* Distance to the center point in meters */
-	bounds := quadtree.NewAABB(center, center.HalfPoint(float64(distance)))
-
-	maxPoints := 10
-	for _, point := range qtree.KNearest(bounds, maxPoints, nil) {
-		log.Printf("Found point: %s\n", point.Data().(string))
-	}
 
 }
 func test_insert() {
@@ -83,7 +58,7 @@ func test_search() {
 	objall := quad_tree.GetAllObjects()
 	fmt.Println("GetAllObjects : ", len(objall))
 
-	near := quad_tree.NearPosition(new_obj.Pos, new_obj.SightRadius)
+	near := quad_tree.Nearest(new_obj.Pos, new_obj.SightRadius)
 	fmt.Println(near)
 }
 func test_move() {

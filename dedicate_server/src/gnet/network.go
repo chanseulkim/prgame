@@ -17,12 +17,12 @@ var server net.PacketConn
 const DGRAM_SIZE = 1400
 const MAX_BUFFSIZE = 1500
 
-func broadcast(buf []byte, buf_len uint32) {
+func broadcast(buf []byte, buf_len int32) {
 	for _, player := range gcore.GetWorld().Players {
 		_, err := server.WriteTo(buf[:buf_len], player.Addr)
 		if err != nil {
-			fmt.Println("broadcast error " + player.Uid + ": " + err.Error())
-			delete(gcore.GetWorld().Players, player.Uid)
+			fmt.Println("broadcast error " + player.UsrId + ": " + err.Error())
+			delete(gcore.GetWorld().Players, player.UsrId)
 		}
 	}
 }
@@ -31,8 +31,8 @@ func unicast(userid string, buf []byte, buf_len int) {
 	player := gcore.GetWorld().Players[userid]
 	_, err := server.WriteTo(buf[:buf_len], player.Addr)
 	if err != nil {
-		fmt.Println("unicast error " + player.Uid + ": " + err.Error())
-		delete(gcore.GetWorld().Players, player.Uid)
+		fmt.Println("unicast error " + player.UsrId + ": " + err.Error())
+		delete(gcore.GetWorld().Players, player.UsrId)
 	}
 }
 
@@ -46,6 +46,9 @@ func RunUDPServer(server_ip string, server_port int) net.Addr {
 	fmt.Println("server address: ", server.LocalAddr().String())
 
 	go ExecLockstep()
+
+	// 200ms 마다 오브젝트 동기화
+	go SyncObjects(200)
 
 	go func() {
 		for {

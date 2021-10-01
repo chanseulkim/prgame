@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/asim/quadtree"
+	// "github.com/asim/quadtree"
 )
 
 const (
@@ -14,8 +15,8 @@ const (
 )
 
 const (
-	DEFAULT_COLISION_RADIUS int = 200
-	DEFAULT_SIGHT_LEN       int = 200
+	DEFAULT_COLISION_RADIUS int = 20
+	DEFAULT_SIGHT_LEN       int = 20
 )
 
 type GObject struct {
@@ -39,7 +40,7 @@ func NewGObject(id int, name string, pos Vector2, radius int) *GObject {
 }
 
 type Player struct {
-	Uid            string
+	UsrId          string
 	Addr           net.Addr
 	position       Vector2
 	ColisionRadius int
@@ -59,45 +60,60 @@ func (p *Player) UpdatePos(new_pos Vector2) { p.position = new_pos }
 type World struct {
 	Players     map[string]*Player // addr, player
 	screen_size Vector2
-	//object_tree *QuadNode
-	object_tree *quadtree.QuadTree
+	object_tree *QuadNode
+	// object_tree *quadtree.QuadTree
 }
 
 var world_instance *World
 
 func (w *World) Init() {
-	centerPoint := quadtree.NewPoint(0.0, 0.0, nil)
-	halfPoint := quadtree.NewPoint(1024, 600, nil)
-	boundingBox := quadtree.NewAABB(centerPoint, halfPoint)
-	w.object_tree = quadtree.New(boundingBox, 0, nil)
-
-	enemy_num := 1
-	for x := 0; x < 1024; x += 60 {
-		for y := 0; y < 600; y += 30 {
-			ename := "enemy_" + strconv.Itoa(enemy_num)
-			e := quadtree.NewPoint(float64(x), float64(y), ename)
-			if !w.object_tree.Insert(e) {
-				log.Fatal("Failed to insert the point")
-				return
-			}
-			enemy_num++
-		}
-	}
+	w.TestInit()
 }
 
-func (w *World) Nearest(player *Player) []*quadtree.Point {
-	center := quadtree.NewPoint(float64(player.position.X), float64(player.position.Y), nil)
-	//distance := 10000000 // 100단위
-	//distance := 8000000 // 80단위
-	distance := 5000000 // 50단위
-	// distance := 1000000 // 10단위
-	bounds := quadtree.NewAABB(center, center.HalfPoint(float64(distance)))
-	maxPoints := 10
-	founds := w.object_tree.KNearest(bounds, maxPoints, nil)
+func (w *World) TestInit() {
+	// test start
+	// case1 := func() {
+	// 	enemy_num := 0
+	// 	for x := 0; x < 1024; x += 60 {
+	// 		for y := 0; y < 600; y += 30 {
+	// 			ename := "enemy_" + strconv.Itoa(enemy_num)
+	// 			e := NewGObject(enemy_num, ename, Vector2{X: x, Y: y}, DEFAULT_COLISION_RADIUS)
+	// 			if !w.object_tree.Insert(e) {
+	// 				log.Fatal("Failed to insert the point ", x, " ", y)
+	// 				return
+	// 			}
+	// 			enemy_num++
+	// 		}
+	// 	}
+	// }()
+	// case1()
+	case2 := func() {
+		enemy_num := 0
+		for x := 0; x < 1024; x += 60 {
+			for y := 0; y < 600; y += 30 {
+				ename := "enemy_" + strconv.Itoa(enemy_num)
+				e := NewGObject(enemy_num, ename, Vector2{X: x, Y: y}, DEFAULT_COLISION_RADIUS)
+				if !w.object_tree.Insert(e) {
+					log.Fatal("Failed to insert the point ", x, " ", y)
+					return
+				}
+				enemy_num++
+			}
+		}
+	}
+	case2()
+	// test end
+}
+
+func (w *World) Nearest(player *Player) []*GObject {
+	founds := w.object_tree.Nearest(player.position, player.ColisionRadius)
 	// for _, point := range founds {
 	// 	log.Printf("Found point: %s\n", point.Data().(string))
 	// }
 	return founds
+}
+func (w *World) GetAllObjects() []*GObject {
+	return w.object_tree.GetAllObjects()
 }
 
 func GetWorld() *World {
@@ -105,6 +121,7 @@ func GetWorld() *World {
 		world_instance = &World{
 			Players:     make(map[string]*Player),
 			screen_size: Vector2{1024, 600},
+			object_tree: NewQuadTreeRoot(1024, 600),
 		}
 		world_instance.Init()
 	}

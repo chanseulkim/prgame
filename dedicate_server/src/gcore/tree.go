@@ -5,7 +5,7 @@ import (
 	"math"
 )
 
-const LEAST_BLOCKSIZE = 32
+const LEAST_BLOCKSIZE = 1
 const (
 	NODE_TOPLEFT     = 0
 	NODE_TOPRIGHT    = 1
@@ -136,22 +136,16 @@ func (self *QuadNode) Insert(new_obj *GObject) bool {
 	if self == nil {
 		return false
 	}
-	var inBoundary = func(p Vector2) bool {
-		return (p.X >= self.topleft_pnt.X && p.X <= self.botright_pnt.X &&
-			p.Y >= self.topleft_pnt.Y && p.Y <= self.botright_pnt.Y)
+	var inBoundary = func(p *Vector2) bool {
+		return (p.X >= self.topleft_pnt.X && p.X <= self.botright_pnt.X+1 &&
+			p.Y >= self.topleft_pnt.Y && p.Y <= self.botright_pnt.Y+1)
 	}
-	if !inBoundary(new_obj.Pos) {
+	if !inBoundary(&new_obj.Pos) {
 		fmt.Println("Error ", new_obj.Name, " is not in boundary")
 		return false
 	}
 	tlp := self.topleft_pnt
 	brp := self.botright_pnt
-	if (math.Abs(float64(tlp.X-brp.X)) <= LEAST_BLOCKSIZE) &&
-		math.Abs(float64(tlp.Y-brp.Y)) <= LEAST_BLOCKSIZE {
-		self.append_object(new_obj)
-		return true
-	}
-
 	if new_obj.Pos.X < (tlp.X+brp.X)/2 { // left
 		if new_obj.Pos.Y < (tlp.Y+brp.Y)/2 { // top left
 			if self.TopLeft == nil {
@@ -163,9 +157,11 @@ func (self *QuadNode) Insert(new_obj *GObject) bool {
 					},
 					self, NODE_TOPLEFT,
 				)
+			} else {
+				self.TopLeft.Insert(new_obj)
 			}
 			self.is_leaf = false
-			self.TopLeft.Insert(new_obj)
+			self.append_object(new_obj)
 		} else { // bottom left
 			if self.BottomLeft == nil {
 				self.BottomLeft = NewQuadNode(new_obj.Id, true,
@@ -180,9 +176,11 @@ func (self *QuadNode) Insert(new_obj *GObject) bool {
 					},
 					self, NODE_BOTTOMLEFT,
 				)
+			} else {
+				self.BottomLeft.Insert(new_obj)
 			}
 			self.is_leaf = false
-			self.BottomLeft.Insert(new_obj)
+			self.append_object(new_obj)
 		}
 	} else { // right
 		if new_obj.Pos.Y <= (tlp.Y+brp.Y)/2 { // top right
@@ -198,9 +196,11 @@ func (self *QuadNode) Insert(new_obj *GObject) bool {
 					},
 					self, NODE_TOPRIGHT,
 				)
+			} else {
+				self.TopRight.Insert(new_obj)
 			}
 			self.is_leaf = false
-			self.TopRight.Insert(new_obj)
+			self.append_object(new_obj)
 		} else { // bottom right
 			if self.BottomRight == nil {
 				self.BottomRight = NewQuadNode(new_obj.Id, true,
@@ -215,24 +215,59 @@ func (self *QuadNode) Insert(new_obj *GObject) bool {
 					},
 					self, NODE_BOTTOMRIGHT,
 				)
+			} else {
+				self.BottomRight.Insert(new_obj)
 			}
 			self.is_leaf = false
-			self.BottomRight.Insert(new_obj)
+			self.append_object(new_obj)
 		}
 	}
-	return false
+	return true
 }
 
-func (self *QuadNode) NearPosition(target_pos Vector2, sight_radius int) []*GObject {
+func (self *QuadNode) Nearest(target_pos Vector2, sight_radius int) []*GObject {
 	var objects []*GObject
-	self.near(target_pos, sight_radius, &objects, self /*root*/)
+	targets_node := self.near(target_pos, sight_radius, &objects, self /*root*/)
+
+	if sight_radius > 0 {
+		if (target_pos.X - sight_radius) <= targets_node.topleft_pnt.X { 
+			// 왼
+			left := Vector2{X: target_pos.X - sight_radius, Y: target_pos.Y}
+			self.near(left, 0, &objects, self /*root*/)
+		}
+		if (target_pos.X + sight_radius) >= targets_node.botright_pnt.X {
+			// 오른
+			right := Vector2{X: target_pos.X + sight_radius, Y: target_pos.Y}
+			self.near(right, 0, &objects, self /*root*/)
+		}
+		if (target_pos.Y - sight_radius) <= targets_node.topleft_pnt.Y {
+			// 위
+			top := Vector2{X: target_pos.X, Y: target_pos.Y - sight_radius}
+			self.near(top, 0, &objects, self /*root*/)
+		}
+		if (target_pos.Y + sight_radius) >= targets_node.botright_pnt.Y {
+			// 아래
+			bot := Vector2{X: target_pos.X, Y: target_pos.Y + sight_radius}
+			self.near(bot, 0, &objects, self /*root*/)
+		}
+	}
 	return objects
 }
 
-func (self *QuadNode) near(target_pos Vector2, sight_radius int, out_objects *[]*GObject, root *QuadNode) {
-	if self == nil {
-		fmt.Println("near nil")
-		return
+func (self *QuadNode) near(target_pos Vector2, sight_radius int, out_objects *[]*GObject, root *QuadNode) *QuadNode {
+	var inBoundary = func(p Vector2) bool {
+		if self == nil {
+			return false
+		}
+		return (p.X >= self.topleft_pnt.X && p.X <= self.botright_pnt.X &&
+			p.Y >= self.topleft_pnt.Y && p.Y <= self.botright_pnt.Y)
+	}
+	if !inBoundary(target_pos) {
+		return self
+	}
+	if self.IsLeaf() {
+		*out_objects = append(*out_objects, self.Parent.GetAllObjects()...)
+		return self
 	}
 	tlp := self.topleft_pnt
 	brp := self.botright_pnt
@@ -240,26 +275,10 @@ func (self *QuadNode) near(target_pos Vector2, sight_radius int, out_objects *[]
 		(math.Abs(float64(tlp.Y-brp.Y)) <= LEAST_BLOCKSIZE) {
 		//TODO: check near sections object
 		//TODO: 지금은 상하좌우만 확인중.. 대각선 확인 필요(원형), 그냥 대각선 좌표 검색하면 상하좌우에서 가져온 데이터와 겹침
-		//TODO: 인접노드 즉시가져오기 필요. 지금은 새로운 위치를 다시검색
 		if sight_radius > 0 {
-			if (target_pos.Y - sight_radius) < self.topleft_pnt.Y {
-				// 위 노드로 넘어감
-				*out_objects = append(*out_objects, root.NearPosition(Vector2{target_pos.X, (target_pos.Y - sight_radius)}, 0)...)
-			}
-			if (target_pos.Y + sight_radius) > self.botright_pnt.Y {
-				// 아래 노드로 넘어감
-				*out_objects = append(*out_objects, root.NearPosition(Vector2{target_pos.X, (target_pos.Y + sight_radius)}, 0)...)
-			}
-			if (target_pos.X - sight_radius) < (self.topleft_pnt.X) {
-				// 왼쪽 노드로 넘어감
-				*out_objects = append(*out_objects, root.NearPosition(Vector2{(target_pos.X - sight_radius), target_pos.Y}, 0)...)
-			}
-			if (target_pos.X + sight_radius) > self.botright_pnt.X {
-				// 오른쪽 노드로 넘어감
-				*out_objects = append(*out_objects, root.NearPosition(Vector2{(target_pos.X + sight_radius), target_pos.Y}, 0)...)
-			}
 		}
-		*out_objects = append(*out_objects, self.GetAllObjects()...)
+		*out_objects = append(*out_objects, self.Parent.GetAllObjects()...)
+		return self
 	}
 
 	x := target_pos.X
@@ -267,37 +286,21 @@ func (self *QuadNode) near(target_pos Vector2, sight_radius int, out_objects *[]
 	var near []*GObject
 	if x < (tlp.X+brp.X)/2 { // left
 		if y < (tlp.Y+brp.Y)/2 { // top left
-			if self.TopLeft == nil {
-				*out_objects = append(*out_objects, self.objs...)
-				return
-			}
 			self.TopLeft.near(target_pos, sight_radius, out_objects, root)
-		} else {
-			if self.BottomLeft == nil { // bottom left
-				*out_objects = append(*out_objects, self.objs...)
-				return
-			}
+		} else { // bottom left
 			self.BottomLeft.near(target_pos, sight_radius, out_objects, root)
 		}
 	} else { // right
 		if target_pos.Y <= (tlp.Y+brp.Y)/2 { // top right
-			if self.TopRight == nil {
-				*out_objects = append(*out_objects, self.objs...)
-				return
-			}
 			self.TopRight.near(target_pos, sight_radius, out_objects, root)
 		} else { // bottom right
-			if self.BottomRight == nil {
-				*out_objects = append(*out_objects, self.objs...)
-				return
-			}
 			self.BottomRight.near(target_pos, sight_radius, out_objects, root)
 		}
 	}
 	if near != nil {
 		*out_objects = append(*out_objects, near...)
 	}
-	return
+	return self
 }
 
 func (self *QuadNode) search(target_pos Vector2) **QuadNode {

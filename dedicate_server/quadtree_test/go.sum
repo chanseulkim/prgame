@@ -1,2 +1,6 @@
+github.com/arl/go-rquad v0.0.1 h1:6sGJxwluELOse8Z7mK5RfHIpUs0oWE7A6qwEP90jARM=
+github.com/arl/go-rquad v0.0.1/go.mod h1:/pUi1KmIb+6AV7k9k7AIt0/obk20kpwOW8eMIM9/yrQ=
+github.com/arl/imgtools v0.1.0 h1:+2u4u/asMJMShy/r8VbHIfh2YyK2QdKRq1QjZD9op+g=
+github.com/arl/imgtools v0.1.0/go.mod h1:XiX1OquLiYIAJV+gd29wW/JJ9nIpcCd4hC4Is800G6E=
 github.com/asim/quadtree v0.1.0 h1:/RoFepMpDsmGmKMIF4o9MxKICeKABGoWP9MTYcH+HBI=
 github.com/asim/quadtree v0.1.0/go.mod h1:K2M5YTG4dpIXvuERd53snM5THchZczdy+k9gH02Shww=
