@@ -1,9 +1,7 @@
 package gcore
 
 import (
-	"fmt"
 	"log"
-	"net"
 	"strconv"
 
 	"github.com/asim/quadtree"
@@ -23,7 +21,7 @@ type GObject struct {
 	Id            int
 	Name          string
 	Pos           Vector2
-	SightRadius   int
+	Radius        int
 	CollisionArea Rectangle
 }
 
@@ -38,24 +36,6 @@ func NewGObject(id int, name string, pos Vector2, radius int) *GObject {
 		},
 	}
 }
-
-type Player struct {
-	UsrId          string
-	Addr           net.Addr
-	position       Vector2
-	ColisionRadius int
-	Index_inworld  int
-}
-
-func NewPlayer(uid string, address net.Addr, position Vector2, colision_radius int) *Player {
-	return &Player{uid, address, position, colision_radius, 0.0}
-}
-
-func (p Player) GetPositionStr() string {
-	return "(" + fmt.Sprintf("%f", p.position.X) + ", " + fmt.Sprintf("%f", p.position.Y) + ")"
-}
-func (p Player) GetPosition() Vector2       { return p.position }
-func (p *Player) UpdatePos(new_pos Vector2) { p.position = new_pos }
 
 type World struct {
 	Players     map[string]*Player // addr, player
@@ -89,8 +69,8 @@ func (w *World) TestInit() {
 	// case1()
 	case2 := func() {
 		enemy_num := 0
-		for x := 0; x < 1024; x += 60 {
-			for y := 0; y < 600; y += 30 {
+		for x := 0; x < 1024; x += 100 {
+			for y := 0; y < 600; y += 60 {
 				ename := "enemy_" + strconv.Itoa(enemy_num)
 				e := NewGObject(enemy_num, ename, Vector2{X: x, Y: y}, DEFAULT_COLISION_RADIUS)
 				if !w.object_tree.Insert(e) {
@@ -98,6 +78,9 @@ func (w *World) TestInit() {
 					return
 				}
 				enemy_num++
+				if enemy_num == 100 {
+					return
+				}
 			}
 		}
 	}
@@ -106,7 +89,7 @@ func (w *World) TestInit() {
 }
 
 func (w *World) Nearest(player *Player) []*GObject {
-	founds := w.object_tree.Nearest(player.position, player.ColisionRadius)
+	founds := w.object_tree.Nearest(player.Position(), player.Obj.Radius)
 	// for _, point := range founds {
 	// 	log.Printf("Found point: %s\n", point.Data().(string))
 	// }

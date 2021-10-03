@@ -56,7 +56,7 @@ func ExecLockstep() {
 
 	}
 }
-func SyncObjects(tick_mili time.Duration) {
+func TEST_SyncObjects(tick_mili time.Duration) {
 	min := -10
 	max := 10
 	rand.Seed(time.Now().UnixNano())
@@ -73,7 +73,7 @@ func SyncObjects(tick_mili time.Duration) {
 			if detected_obj != nil {
 				testtrigger := rand.Intn(max-min) + min
 				x, y := (detected_obj.Pos.X + testtrigger), (detected_obj.Pos.Y + testtrigger + 1)
-				msg += detected_obj.Name + "_" + v2Str(Vector2{X: int(x), Y: int(y)}) + "@"
+				msg += detected_obj.Name + "_" + ToPosString(x, y) + "@"
 			}
 		}
 		msg += ";m;"
@@ -82,14 +82,35 @@ func SyncObjects(tick_mili time.Duration) {
 	}
 
 }
-func enterClient(userid string, client_addr net.Addr, pos Vector2) bool {
-	_, exists := GetWorld().Players[userid]
+func SyncObjects(tick_mili time.Duration) {
+	TEST_SyncObjects(tick_mili)
+	return
+	ticker := time.NewTicker(time.Millisecond * tick_mili)
+	for _ = range ticker.C {
+		founds := GetWorld().GetAllObjects()
+		if founds == nil {
+			continue
+		}
+		var msg string = "noti;objects;"
+		for _, detected_obj := range founds {
+			if detected_obj != nil {
+				msg += detected_obj.Name + "_" + ToPosString(detected_obj.Pos.X, detected_obj.Pos.Y) + "@"
+			}
+		}
+		msg += ";m;"
+		// objque <- &msg
+		broadcast([]byte(msg), int32(len(msg)))
+	}
+
+}
+func enterClient(nickname string, client_addr net.Addr, pos Vector2) bool {
+	_, exists := GetWorld().Players[nickname]
 	if exists == false {
 		for _, player := range GetWorld().Players {
-			if userid == player.UsrId {
+			if nickname == player.NickName {
 				continue
 			}
-			syncmsg := player.UsrId + ";sync;" + GetWorld().Players[player.UsrId].GetPositionStr() + ";m;"
+			syncmsg := player.NickName + ";sync;" + GetWorld().Players[player.NickName].GetPositionStr() + ";m;"
 			syncmsg_len := len(syncmsg)
 			syncmsg_buff := make([]byte, syncmsg_len)
 			copy(syncmsg_buff, syncmsg)
@@ -99,8 +120,8 @@ func enterClient(userid string, client_addr net.Addr, pos Vector2) bool {
 				return false
 			}
 		}
-		fmt.Println("enter client : " + client_addr.String() + ", " + userid)
-		GetWorld().Players[userid] = NewPlayer(userid, client_addr, pos, DEFAULT_COLISION_RADIUS)
+		fmt.Println("enter client : " + client_addr.String() + ", " + nickname)
+		GetWorld().Players[nickname] = NewPlayer(0, nickname, client_addr, pos, DEFAULT_COLISION_RADIUS)
 	}
 	return true
 }
@@ -158,7 +179,7 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 			fmt.Println("nil player " + userid)
 		}
 		handleMove(player, action)
-
+		return
 	} else if command == "noti" {
 		if userid == "obj" {
 			objname := header[2]
@@ -182,6 +203,9 @@ func posStr2V2(str string) (Vector2, error) {
 	y, _ := strconv.ParseFloat(str[p+len(tok):], 32)
 	v := Vector2{int(x), int(y)}
 	return v, nil
+}
+func ToPosString(x int, y int) string {
+	return "(" + strconv.Itoa(int(x)) + ", " + strconv.Itoa(int(y)) + ")"
 }
 func v2Str(v Vector2) string {
 	return "(" + strconv.Itoa(int(v.X)) + ", " + strconv.Itoa(int(v.Y)) + ")"

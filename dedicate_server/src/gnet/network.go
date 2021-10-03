@@ -21,8 +21,8 @@ func broadcast(buf []byte, buf_len int32) {
 	for _, player := range gcore.GetWorld().Players {
 		_, err := server.WriteTo(buf[:buf_len], player.Addr)
 		if err != nil {
-			fmt.Println("broadcast error " + player.UsrId + ": " + err.Error())
-			delete(gcore.GetWorld().Players, player.UsrId)
+			fmt.Println("broadcast error " + player.NickName + ": " + err.Error())
+			delete(gcore.GetWorld().Players, player.NickName)
 		}
 	}
 }
@@ -31,8 +31,8 @@ func unicast(userid string, buf []byte, buf_len int) {
 	player := gcore.GetWorld().Players[userid]
 	_, err := server.WriteTo(buf[:buf_len], player.Addr)
 	if err != nil {
-		fmt.Println("unicast error " + player.UsrId + ": " + err.Error())
-		delete(gcore.GetWorld().Players, player.UsrId)
+		fmt.Println("unicast error " + player.NickName + ": " + err.Error())
+		delete(gcore.GetWorld().Players, player.NickName)
 	}
 }
 

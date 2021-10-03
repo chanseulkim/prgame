@@ -62,6 +62,7 @@ func _process_msg(msg):
 				enemies[idx].hide()
 			for num in near_nums:
 				if num in enemies:
+					enemies[num].position = posstr2pos(poss[num])
 					enemies[num].show()
 				else:
 					var enemy = load('res://Enemy.tscn').instance()

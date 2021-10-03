@@ -230,7 +230,7 @@ func (self *QuadNode) Nearest(target_pos Vector2, sight_radius int) []*GObject {
 	targets_node := self.near(target_pos, sight_radius, &objects, self /*root*/)
 
 	if sight_radius > 0 {
-		if (target_pos.X - sight_radius) <= targets_node.topleft_pnt.X { 
+		if (target_pos.X - sight_radius) <= targets_node.topleft_pnt.X {
 			// 왼
 			left := Vector2{X: target_pos.X - sight_radius, Y: target_pos.Y}
 			self.near(left, 0, &objects, self /*root*/)
@@ -339,7 +339,23 @@ func (self *QuadNode) search(target_pos Vector2) **QuadNode {
 	}
 	return nil
 }
-
+func (self *QuadNode) MoveObject(target *GObject, to Vector2) {
+	s := self.search(target.Pos)
+	if s == nil {
+		return
+	}
+	for i, obj := range (*s).objs {
+		if obj.Id == target.Id {
+			*&obj.Pos = to
+			self.Insert(obj)
+			(*s).objs[i] = nil
+		}
+	}
+	after := self.search(to)
+	if after == nil {
+		fmt.Println("s")
+	}
+}
 func (self *QuadNode) Move(from_pos Vector2, from_id int, to Vector2) {
 	s := self.search(from_pos)
 	if s == nil {
