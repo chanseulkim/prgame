@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"dedicate_server/gcore"
 	. "dedicate_server/gcore"
 )
 
@@ -77,13 +78,51 @@ func TEST_SyncObjects(tick_mili time.Duration) {
 			}
 		}
 		msg += ";m;"
-		// objque <- &msg
-		broadcast([]byte(msg), int32(len(msg)))
+		for _, player := range gcore.GetWorld().Players {
+			for i := 0; i < 100; i++ {
+				_, err := server.WriteTo([]byte(msg)[:len(msg)], player.Addr)
+				if err != nil {
+					fmt.Println("broadcast error " + player.NickName + ": " + err.Error())
+					delete(gcore.GetWorld().Players, player.NickName)
+				}
+			}
+			break
+		}
 	}
+}
+func TEST_SyncObjects2(tick_mili time.Duration) {
+	min := -10
+	max := 10
+	rand.Seed(time.Now().UnixNano())
 
+	// var objque = make(chan *string)
+	ticker := time.NewTicker(time.Millisecond * tick_mili)
+	for _ = range ticker.C {
+		for _, player := range gcore.GetWorld().Players {
+			founds := GetWorld().Nearest(player)
+			if founds == nil {
+				fmt.Println("not found")
+				continue
+			}
+			var msg string = "noti;objects;"
+			for _, detected_obj := range founds {
+				if detected_obj != nil {
+					testtrigger := rand.Intn(max-min) + min
+					x, y := (detected_obj.Pos.X + testtrigger), (detected_obj.Pos.Y + testtrigger + 1)
+					msg += detected_obj.Name + "_" + ToPosString(x, y) + "@"
+				}
+			}
+			msg += ";m;"
+			_, err := server.WriteTo([]byte(msg)[:len(msg)], player.Addr)
+			if err != nil {
+				fmt.Println("broadcast error " + player.NickName + ": " + err.Error())
+				delete(gcore.GetWorld().Players, player.NickName)
+			}
+		}
+	}
 }
 func SyncObjects(tick_mili time.Duration) {
-	TEST_SyncObjects(tick_mili)
+	TEST_SyncObjects2(tick_mili)
 	return
 	ticker := time.NewTicker(time.Millisecond * tick_mili)
 	for _ = range ticker.C {
@@ -172,6 +211,8 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 		//speed := header[4]
 		pos := header[5]
 		pos_v2, _ := posStr2V2(pos)
+
+		//TODO: Player객체를 업데이트 하고 오브젝트 위치 변경에 따라 objects_tree에도 업데이트가 되어야함
 		player := GetWorld().Players[userid]
 		if player != nil {
 			player.UpdatePos(pos_v2)

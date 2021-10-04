@@ -254,6 +254,50 @@ func (self *QuadNode) Nearest(target_pos Vector2, sight_radius int) []*GObject {
 	return objects
 }
 
+func (self *QuadNode) Nearest2(target_pos Vector2, sight_radius int) []*GObject {
+	if self == nil {
+		fmt.Println("error Nearest2")
+		return nil
+	}
+	tlp := self.topleft_pnt
+	brp := self.botright_pnt
+	if (math.Abs(float64(tlp.X-brp.X)) <= LEAST_BLOCKSIZE) &&
+		(math.Abs(float64(tlp.Y-brp.Y)) <= LEAST_BLOCKSIZE) {
+		fmt.Println("found")
+		// found
+		return self.Parent.GetAllObjects()
+	}
+
+	x := target_pos.X
+	y := target_pos.Y
+	if x < (tlp.X+brp.X)/2 { // left
+		if y < (tlp.Y+brp.Y)/2 { // top left
+			if self.TopLeft == nil {
+				return self.Parent.GetAllObjects()
+			}
+			return self.TopLeft.Nearest2(target_pos, sight_radius)
+		} else { // bottom left
+			if self.BottomLeft == nil {
+				return self.Parent.GetAllObjects()
+			}
+			return self.BottomLeft.Nearest2(target_pos, sight_radius)
+		}
+	} else { // right
+		if target_pos.Y <= (tlp.Y+brp.Y)/2 { // top right
+			if self.TopRight == nil {
+				return self.Parent.GetAllObjects()
+			}
+			return self.TopRight.Nearest2(target_pos, sight_radius)
+		} else { // bottom right
+			if self.BottomRight == nil {
+				return self.Parent.GetAllObjects()
+			}
+			return self.BottomRight.Nearest2(target_pos, sight_radius)
+		}
+	}
+	return nil
+}
+
 func (self *QuadNode) near(target_pos Vector2, sight_radius int, out_objects *[]*GObject, root *QuadNode) *QuadNode {
 	var inBoundary = func(p Vector2) bool {
 		if self == nil {

@@ -89,7 +89,7 @@ func (w *World) TestInit() {
 }
 
 func (w *World) Nearest(player *Player) []*GObject {
-	founds := w.object_tree.Nearest(player.Position(), player.Obj.Radius)
+	founds := w.object_tree.Nearest2(player.Position(), player.Obj.Radius)
 	// for _, point := range founds {
 	// 	log.Printf("Found point: %s\n", point.Data().(string))
 	// }
