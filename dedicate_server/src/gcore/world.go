@@ -1,6 +1,7 @@
 package gcore
 
 import (
+	"container/list"
 	"log"
 	"strconv"
 
@@ -88,14 +89,14 @@ func (w *World) TestInit() {
 	// test end
 }
 
-func (w *World) Nearest(player *Player) []*GObject {
+func (w *World) Nearest(player *Player) *list.List {
 	founds := w.object_tree.Nearest2(player.Position(), player.Obj.Radius)
 	// for _, point := range founds {
 	// 	log.Printf("Found point: %s\n", point.Data().(string))
 	// }
 	return founds
 }
-func (w *World) GetAllObjects() []*GObject {
+func (w *World) GetAllObjects() *list.List {
 	return w.object_tree.GetAllObjects()
 }
 

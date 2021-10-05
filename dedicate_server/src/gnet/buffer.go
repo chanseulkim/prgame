@@ -7,12 +7,11 @@ import (
 )
 
 type MsgBuff struct {
-	data     []byte
-	size     int32
-	capacity uint32
+	data []byte
+	size int
 }
 
-func NewMsgBuff(data []byte, data_size int32) *MsgBuff {
+func NewMsgBuff(data []byte, data_size int) *MsgBuff {
 	var buff MsgBuff
 	buff.data = make([]byte, data_size)
 	copy(buff.data, data)
@@ -20,7 +19,7 @@ func NewMsgBuff(data []byte, data_size int32) *MsgBuff {
 	return &buff
 }
 
-func (self *MsgBuff) Write(data []byte, data_size int32) {
+func (self *MsgBuff) Write(data []byte, data_size int) {
 	copy(self.data[self.size:], data)
 	self.size += data_size
 }
