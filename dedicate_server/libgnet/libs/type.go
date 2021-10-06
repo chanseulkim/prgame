@@ -1,4 +1,4 @@
-package gcore
+package gnet
 
 type Float float32
 

@@ -2,9 +2,11 @@ package gcore
 
 import (
 	"container/list"
+	. "dedicate_server/gnet"
+	"fmt"
 	"log"
+	"net"
 	"strconv"
-	// "github.com/asim/quadtree"
 )
 
 const (
@@ -29,23 +31,10 @@ func (w *World) Init() {
 	w.TestInit()
 }
 
+func (w *World) UpdatePlayer(uid string, position Vector2) {
+}
+
 func (w *World) TestInit() {
-	// test start
-	// case1 := func() {
-	// 	enemy_num := 0
-	// 	for x := 0; x < 1024; x += 60 {
-	// 		for y := 0; y < 600; y += 30 {
-	// 			ename := "enemy_" + strconv.Itoa(enemy_num)
-	// 			e := NewGObject(enemy_num, ename, Vector2{X: x, Y: y}, DEFAULT_COLISION_RADIUS)
-	// 			if !w.object_tree.Insert(e) {
-	// 				log.Fatal("Failed to insert the point ", x, " ", y)
-	// 				return
-	// 			}
-	// 			enemy_num++
-	// 		}
-	// 	}
-	// }()
-	// case1()
 	case2 := func() {
 		enemy_num := 0
 		for x := 0; x < 1024; x += 100 {
@@ -93,3 +82,27 @@ func GetWorld() *World {
 func (w *World) AddObject(obj *GObject) {
 	w.object_tree.Insert(obj)
 }
+
+type Player struct {
+	Obj      *GObject
+	NickName string
+	Addr     net.Addr
+}
+
+func (p *Player) ColisionRadius() int {
+	return p.Obj.Radius
+}
+func NewPlayer(usrid int, nick_name string, address net.Addr, position Vector2, colision_radius int) *Player {
+	return &Player{
+		NewGObject(usrid, nick_name, position, colision_radius),
+		nick_name,
+		address,
+	}
+}
+func (p *Player) Position() Vector2 {
+	return p.Obj.Pos
+}
+func (p Player) GetPositionStr() string {
+	return "(" + fmt.Sprintf("%f", p.Obj.Pos.X) + ", " + fmt.Sprintf("%f", p.Obj.Pos.Y) + ")"
+}
+func (p *Player) UpdatePos(new_pos Vector2) { p.Obj.Pos = new_pos }
