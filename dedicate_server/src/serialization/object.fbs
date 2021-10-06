@@ -1,0 +1,43 @@
+// Example IDL file for our monster's schema.
+
+namespace dedicate_server.serialization;
+
+enum GHeaderType:uint8 { Move = 0, Sync = 1, Enter = 2, Leave = 3, Msg = 3 }
+
+struct SzGHeader {
+  header_type:GHeaderType;
+}
+//union Equipment { Weapon } // Optionally add more tables.
+
+struct SzVector2 {
+  x:int;
+  y:int;
+}
+
+struct SzRectangle {
+  top_left:SzVector2;
+  bot_right:SzVector2;
+}
+
+table SzGObject {
+  id:int;
+  name:string;
+  pos:SzVector2;
+  radius:int;
+  collision_area:SzRectangle;
+}
+
+//table Monster {
+//  pos:Vec3;
+//  mana:short = 150;
+//  hp:short = 100;
+//  name:string;
+//  friendly:bool = false (deprecated);
+//  inventory:[ubyte];
+//  color:Color = Blue;
+//  weapons:[Weapon];
+//  equipped:Equipment;
+//  path:[Vec3];
+//}
+
+root_type SzGObject;

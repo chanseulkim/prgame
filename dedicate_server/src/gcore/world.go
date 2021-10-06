@@ -4,8 +4,6 @@ import (
 	"container/list"
 	"log"
 	"strconv"
-
-	"github.com/asim/quadtree"
 	// "github.com/asim/quadtree"
 )
 
@@ -17,26 +15,6 @@ const (
 	DEFAULT_COLISION_RADIUS int = 20
 	DEFAULT_SIGHT_LEN       int = 20
 )
-
-type GObject struct {
-	Id            int
-	Name          string
-	Pos           Vector2
-	Radius        int
-	CollisionArea Rectangle
-}
-
-func NewGObject(id int, name string, pos Vector2, radius int) *GObject {
-	return &GObject{
-		Id:   id,
-		Name: name,
-		Pos:  Vector2{pos.X, pos.Y},
-		CollisionArea: Rectangle{
-			TopLeft:  Vector2{X: pos.X - radius, Y: pos.Y - radius},
-			BotRight: Vector2{X: pos.X + radius, Y: pos.Y + radius},
-		},
-	}
-}
 
 type World struct {
 	Players     map[string]*Player // addr, player
@@ -111,6 +89,7 @@ func GetWorld() *World {
 	}
 	return world_instance
 }
+
 func (w *World) AddObject(obj *GObject) {
-	quadtree.NewPoint(float64(obj.Pos.X), float64(obj.Pos.Y), obj)
+	w.object_tree.Insert(obj)
 }
