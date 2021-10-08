@@ -131,7 +131,7 @@ func SyncAllSzObjects(tick_mili time.Duration) {
 			}
 		}
 		msgarr = append(msgarr, ";m;"...)
-		packet_que <- NewSyncPacket(HEADERTYPE_SYNC, msgarr, int32(len(msgarr)))
+		packet_que <- NewSyncPacket(TYPE_HEADER_SYNC, msgarr, int32(len(msgarr)))
 	}
 }
 
