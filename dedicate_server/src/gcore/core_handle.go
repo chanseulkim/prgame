@@ -2,20 +2,19 @@ package gcore
 
 import (
 	"fmt"
+	. "libgnet/gnet"
 	"log"
 	"math/rand"
 	"net"
 	"strconv"
 	"strings"
 	"time"
-
-	. "dedicate_server/gnet"
 )
 
 const circle_radius int = 200
 
 var msg_queue_ch = make(chan *MsgBuff)
-var packet_que = make(chan *GPacket)
+var packet_que = make(chan *SyncPacket)
 
 const FPS = 60
 const LOCKSTEP_CNT = 200 // ?? miliseconds per onetime
@@ -132,7 +131,7 @@ func SyncAllSzObjects(tick_mili time.Duration) {
 			}
 		}
 		msgarr = append(msgarr, ";m;"...)
-		packet_que <- NewGPacket(HEADERTYPE_SYNC, msgarr, int32(len(msgarr)))
+		packet_que <- NewSyncPacket(HEADERTYPE_SYNC, msgarr, int32(len(msgarr)))
 	}
 }
 

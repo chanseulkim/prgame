@@ -2,11 +2,12 @@ package gcore
 
 import (
 	"container/list"
-	. "dedicate_server/gnet"
 	"fmt"
 	"log"
 	"net"
 	"strconv"
+
+	. "libgnet/gnet"
 )
 
 const (

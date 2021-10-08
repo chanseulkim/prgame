@@ -1,0 +1,12 @@
+{
+    "go.gopath": "${workspaceFolder}", 
+    "go.inferGopath": true, 
+    "terminal.integrated.env.windows": {
+        "GOROOT": "/usr/local/go",
+        "GOPATH": "${workspaceFolder}",
+    },
+    "terminal.integrated.env.osx": {
+        "GOROOT": "/usr/local/go",
+        "GOPATH": "${workspaceFolder}" 
+    },
+}

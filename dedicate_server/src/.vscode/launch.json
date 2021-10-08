@@ -9,10 +9,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            //"program": "C:\\work\\games\\prgame\\dedicate_server\\src\\main.go"
-            // "command": "echo WFWF ${workspaceFolder}",
             "program": "${workspaceFolder}/main.go",
-            //"program": "C:\\Users\\ckstm\\OneDrive\\Desktop\\source\\game\\proj1\\prgame\\dedicate_server\\src_relay\\main.go"
             
         }
     ]

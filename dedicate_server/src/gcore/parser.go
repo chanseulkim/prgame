@@ -8,17 +8,17 @@ const MAX_MSG_HEADER_COUNT = 20
 // * requirements : user_id;command;
 // * user_id;command;action;delta-time;
 const (
-	CMD_ENTER byte = 0
-	CMD_LEAVE      = 1
-	CMD_ACTION
-	CMD_MOVE
-	CMD_PING
+	CMD_ENTER  byte = 0
+	CMD_LEAVE  byte = 1
+	CMD_ACTION byte = 2
+	CMD_MOVE   byte = 3 //
+	CMD_PING   byte = 4
 )
 const (
-	ACT_UIUP   byte = 0
-	ACT_UIDOWN      = 1
-	ACT_UILEFT
-	ACT_UIRIGHT
+	ACT_UIUP    byte = 0
+	ACT_UIDOWN  byte = 1
+	ACT_UILEFT  byte = 2
+	ACT_UIRIGHT byte = 3
 )
 
 type MsgHeader struct {
