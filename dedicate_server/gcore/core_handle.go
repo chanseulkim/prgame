@@ -2,7 +2,7 @@ package gcore
 
 import (
 	"fmt"
-	. "libgnet/gnet"
+	. "gnet"
 	"log"
 	"math/rand"
 	"net"
@@ -51,7 +51,7 @@ func ExecLockstep() {
 		}
 		last_timestamp = now_timestamp
 		if sending_size > 0 {
-			broadcast(sending_buffer, sending_size)
+			Broadcast(sending_buffer, sending_size)
 			sending_size = 0
 		}
 	}
@@ -77,12 +77,12 @@ func TEST_SyncObjects(tick_mili time.Duration) {
 			}
 		}
 		msg += ";m;"
-		for _, player := range GetWorld().Players {
+		peers := GetPeers()
+		for name, _ := range *peers {
 			for i := 0; i < 100; i++ {
-				_, err := server.WriteTo([]byte(msg)[:len(msg)], player.Addr)
+				_, err := Unicast(name, []byte(msg), len(msg))
 				if err != nil {
-					fmt.Println("broadcast error " + player.NickName + ": " + err.Error())
-					delete(GetWorld().Players, player.NickName)
+					LeavePeer(name)
 				}
 			}
 			break
@@ -108,7 +108,7 @@ func SyncNearObjects(tick_mili time.Duration) {
 				}
 			}
 			msg += ";m;"
-			Send([]byte(msg), len(msg), player.Addr)
+			Unicast(player.NickName, []byte(msg), len(msg))
 		}
 	}
 }
@@ -165,13 +165,15 @@ func enterClient(nickname string, client_addr net.Addr, pos Vector2) bool {
 			syncmsg_len := len(syncmsg)
 			syncmsg_buff := make([]byte, syncmsg_len)
 			copy(syncmsg_buff, syncmsg)
-			_, err := server.WriteTo(syncmsg_buff[:syncmsg_len], client_addr)
+			_, err := Unicast(player.NickName, syncmsg_buff, syncmsg_len)
+			// _, err := server.WriteTo(syncmsg_buff[:syncmsg_len], client_addr)
 			if err != nil {
 				log.Fatal(err)
 				return false
 			}
 		}
 		fmt.Println("enter client : " + client_addr.String() + ", " + nickname)
+		GetWorld().AddPlayer(nickname, client_addr, pos)
 		GetWorld().Players[nickname] = NewPlayer(0, nickname, client_addr, pos, DEFAULT_COLISION_RADIUS)
 	}
 	return true
@@ -195,7 +197,7 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 		fmt.Println("ping pong")
 		var msg []byte = []byte{'p', 'o', 'n', 'g'}
 		msg_len := len(msg)
-		unicast(userid, msg, msg_len)
+		Unicast(userid, msg, msg_len)
 		return
 	} else if command == "enter" {
 		player_pos := header[2]

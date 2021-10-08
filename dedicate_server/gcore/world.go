@@ -7,7 +7,7 @@ import (
 	"net"
 	"strconv"
 
-	. "libgnet/gnet"
+	. "gnet"
 )
 
 const (
@@ -23,16 +23,12 @@ type World struct {
 	Players     map[string]*Player // addr, player
 	screen_size Vector2
 	object_tree *QuadNode
-	// object_tree *quadtree.QuadTree
 }
 
 var world_instance *World
 
 func (w *World) Init() {
 	w.TestInit()
-}
-
-func (w *World) UpdatePlayer(uid string, position Vector2) {
 }
 
 func (w *World) TestInit() {
@@ -59,9 +55,6 @@ func (w *World) TestInit() {
 
 func (w *World) Nearest(player *Player) *list.List {
 	founds := w.object_tree.Nearest2(player.Position(), player.Obj.Radius)
-	// for _, point := range founds {
-	// 	log.Printf("Found point: %s\n", point.Data().(string))
-	// }
 	return founds
 }
 func (w *World) GetAllObjects() *list.List {
@@ -79,7 +72,12 @@ func GetWorld() *World {
 	}
 	return world_instance
 }
-
+func (w *World) AddPlayer(nickname string, client_addr net.Addr, pos Vector2) {
+	w.Players[nickname] = NewPlayer(0, nickname, client_addr, pos, DEFAULT_COLISION_RADIUS)
+}
+func (w *World) RemovePlayer(nickname string) {
+	delete(w.Players, nickname)
+}
 func (w *World) AddObject(obj *GObject) {
 	w.object_tree.Insert(obj)
 }
