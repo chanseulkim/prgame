@@ -207,18 +207,7 @@ func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 		// screen_size := header[2]
 	} else if command == "move" {
 		action := header[2]
-		//delta_time := header[3]
-		//speed := header[4]
-		pos := header[5]
-		pos_v2, _ := posStr2V2(pos)
 
-		//TODO: Player객체를 업데이트 하고 오브젝트 위치 변경에 따라 objects_tree에도 업데이트가 되어야함
-		player := GetWorld().Players[userid]
-		if player != nil {
-			player.UpdatePos(pos_v2)
-		} else {
-			fmt.Println("nil player " + userid)
-		}
 		handleMove(player, action)
 		return
 	} else if command == "noti" {
