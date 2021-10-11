@@ -180,45 +180,31 @@ func enterClient(nickname string, client_addr net.Addr, pos Vector2) bool {
 }
 
 func handleMove(player *Player, action string) {
-	// if player != nil {
-	// 	player.UpdatePos(pos_v2)
-	// } else {
-	// 	fmt.Println("nil player " + userid)
-	// }
 	return
 }
 
 func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
-	buffstr := string(buf[:])
-	header := SpliteMsg(buffstr)
-	userid := header[0]
-	command := header[1]
-	if command == "ping" {
-		fmt.Println("ping pong")
-		var msg []byte = []byte{'p', 'o', 'n', 'g'}
-		msg_len := len(msg)
-		Unicast(userid, msg, msg_len)
-		return
-	} else if command == "enter" {
-		player_pos := header[2]
-		pos_v2, _ := posStr2V2(player_pos)
-		enterClient(userid, client_addr, pos_v2)
-		fmt.Println("enter ", userid)
-		// screen_size := header[2]
-	} else if command == "move" {
-		action := header[2]
-
-		handleMove(player, action)
-		return
-	} else if command == "noti" {
-		if userid == "obj" {
-			objname := header[2]
-			pos := header[3]
-			pos_v2, _ := posStr2V2(pos)
-			GetWorld().AddObject(&GObject{Name: objname, Pos: pos_v2})
+	packet := ParsePacketHeader(buf)
+	if packet.HeaderType == TYPE_HEADER_CMD {
+		if packet.CommandType == TYPE_COMMAND_ENTER {
+			userid, pos_v2 := ParseCommandData(packet.Data)
+			enterClient(userid, client_addr, pos_v2)
+			fmt.Println("enter ", userid)
+			// screen_size := header[2]
+		} else if packet.CommandType == TYPE_COMMAND_MOVE {
+			// action := header[2]
+			// handleMove(player, action)
+			return
 		}
+		msg_queue_ch <- NewMsgBuff(buf, buf_len)
+
+	} else if packet.HeaderType == TYPE_HEADER_SYNC {
+		userid, pos_v2 := ParseSyncData(packet.Data)
+		objname := header[2]
+		pos := header[3]
+		pos_v2, _ := posStr2V2(pos)
+		GetWorld().AddObject(&GObject{Name: objname, Pos: pos_v2})
 	}
-	msg_queue_ch <- NewMsgBuff(buf, buf_len)
 }
 
 // "(40, 40)" -> x:40, y:40 int Vector2
