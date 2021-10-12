@@ -1,6 +1,7 @@
 package gcore
 
 import (
+	"container/list"
 	"fmt"
 	. "gnet"
 	"log"
@@ -116,22 +117,28 @@ func SyncNearObjects(tick_mili time.Duration) {
 func SyncAllSzObjects(tick_mili time.Duration) {
 	ticker := time.NewTicker(time.Millisecond * tick_mili)
 	for _ = range ticker.C {
-		founds := GetWorld().GetAllObjects()
-		if founds == nil {
-			continue
-		}
-		var msgarr []byte = make([]byte, 1024)
-		msgarr = append(msgarr, "noti;objects;"...)
-		for e := founds.Front(); e != nil; e = e.Next() {
-			obj := e.Value.(*GObject)
-			if obj != nil {
-				data, _ := obj.Serialize()
-				msgarr = append(msgarr, data...)
-				msgarr = append(msgarr, "@"...)
+		var founds_ch chan *list.List
+		go GetWorld().object_tree.GetAllObjectsToCh(founds_ch)
+		// if founds_ch == nil {
+		// 	continue
+		// }
+		for founds := range founds_ch {
+			var msgarr []byte = make([]byte, 1024)
+			pack := NewSyncPacket(TYPE_HEADER_SYNC, msgarr, int32(len(msgarr)))
+			//msgarr = append(msgarr, "noti;objects;"...)
+			for e := founds.Front(); e != nil; e = e.Next() {
+				obj := e.Value.(*GObject)
+				if obj != nil {
+					data, _ := obj.Serialize()
+					msgarr = append(msgarr, data...)
+					msgarr = append(msgarr, "@"...)
+				}
 			}
+			msgarr = append(msgarr, ";m;"...)
+			pack.Data = msgarr
+			packet_que <- pack
 		}
-		msgarr = append(msgarr, ";m;"...)
-		packet_que <- NewSyncPacket(TYPE_HEADER_SYNC, msgarr, int32(len(msgarr)))
+
 	}
 }
 
