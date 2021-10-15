@@ -1,4 +1,4 @@
-package libs
+package quadtree
 
 type Float float32
 

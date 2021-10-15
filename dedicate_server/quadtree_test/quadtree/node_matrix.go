@@ -1,4 +1,4 @@
-package libs
+package quadtree
 
 //2D
 type NodeMatrix [][]*QuadNode

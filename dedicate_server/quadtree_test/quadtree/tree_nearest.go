@@ -1,4 +1,4 @@
-package libs
+package quadtree
 
 import (
 	"container/list"
@@ -281,6 +281,10 @@ func (node *QuadNode) nearest_task(target_pos Vector2, sight_radius int, root *Q
 		fmt.Println("error Nearest2")
 		return nil
 	}
+	if (*is_gotten)[node.Id] {
+		return nil
+	}
+	(*is_gotten)[node.Id] = true
 	tlp := node.topleft_pnt
 	brp := node.botright_pnt
 	CheckOver := func() *list.List {
@@ -290,25 +294,33 @@ func (node *QuadNode) nearest_task(target_pos Vector2, sight_radius int, root *Q
 			if (target_pos.Y - sight_radius) < tlp.Y { // up
 				if (node.NodeSector == NODE_TOPLEFT) || (node.NodeSector == NODE_TOPRIGHT) {
 					near_pos := Vector2{X: target_pos.X, Y: (target_pos.Y - sight_radius)}
-					nearests.PushBackList(root.nearest_task(near_pos, 0, root, is_gotten))
+					if objs := root.nearest_task(near_pos, 0, root, is_gotten); objs != nil {
+						nearests.PushBackList(objs)
+					}
 				}
 			}
 			if (target_pos.Y + sight_radius) >= brp.Y { // down
 				if (node.NodeSector == NODE_BOTTOMLEFT) || (node.NodeSector == NODE_BOTTOMRIGHT) {
 					near_pos := Vector2{X: target_pos.X, Y: (target_pos.Y + sight_radius)}
-					nearests.PushBackList(root.nearest_task(near_pos, 0, root, is_gotten))
+					if objs := root.nearest_task(near_pos, 0, root, is_gotten); objs != nil {
+						nearests.PushBackList(objs)
+					}
 				}
 			}
 			if (target_pos.X - sight_radius) < tlp.X { // left
 				if (node.NodeSector == NODE_TOPLEFT) || (node.NodeSector == NODE_BOTTOMLEFT) {
 					near_pos := Vector2{X: target_pos.X - sight_radius, Y: target_pos.Y}
-					nearests.PushBackList(root.nearest_task(near_pos, 0, root, is_gotten))
+					if objs := root.nearest_task(near_pos, 0, root, is_gotten); objs != nil {
+						nearests.PushBackList(objs)
+					}
 				}
 			}
 			if (target_pos.X + sight_radius) < brp.X { // right
 				if (node.NodeSector == NODE_TOPRIGHT) || (node.NodeSector == NODE_BOTTOMRIGHT) {
 					near_pos := Vector2{X: target_pos.X + sight_radius, Y: target_pos.Y}
-					nearests.PushBackList(root.nearest_task(near_pos, 0, root, is_gotten))
+					if objs := root.nearest_task(near_pos, 0, root, is_gotten); objs != nil {
+						nearests.PushBackList(objs)
+					}
 				}
 			}
 			//대각
@@ -321,7 +333,9 @@ func (node *QuadNode) nearest_task(target_pos Vector2, sight_radius int, root *Q
 			if tl_outbnd.Y < tlp.Y {
 				if tl_outbnd.X < tlp.X {
 					if node.NodeSector == NODE_TOPLEFT {
-						nearests.PushBackList(root.nearest_task(tl_outbnd, 0, root, is_gotten))
+						if objs := root.nearest_task(tl_outbnd, 0, root, is_gotten); objs != nil {
+							nearests.PushBackList(objs)
+						}
 					}
 				}
 			}
@@ -333,7 +347,9 @@ func (node *QuadNode) nearest_task(target_pos Vector2, sight_radius int, root *Q
 			if tr_outbnd.Y >= tlp.Y {
 				if tr_outbnd.X >= tlp.X {
 					if node.NodeSector == NODE_TOPRIGHT {
-						nearests.PushBackList(root.nearest_task(tr_outbnd, 0, root, is_gotten))
+						if objs := root.nearest_task(tr_outbnd, 0, root, is_gotten); objs != nil {
+							nearests.PushBackList(objs)
+						}
 					}
 				}
 			}
@@ -345,7 +361,9 @@ func (node *QuadNode) nearest_task(target_pos Vector2, sight_radius int, root *Q
 			if bl_outbnd.Y >= brp.Y {
 				if bl_outbnd.X < brp.X {
 					if node.NodeSector == NODE_BOTTOMLEFT {
-						nearests.PushBackList(root.nearest_task(bl_outbnd, 0, root, is_gotten))
+						if objs := root.nearest_task(bl_outbnd, 0, root, is_gotten); objs != nil {
+							nearests.PushBackList(objs)
+						}
 					}
 				}
 			}
@@ -357,7 +375,9 @@ func (node *QuadNode) nearest_task(target_pos Vector2, sight_radius int, root *Q
 			if br_outbnd.Y < brp.Y { // right
 				if br_outbnd.X < brp.X {
 					if node.NodeSector == NODE_BOTTOMRIGHT {
-						nearests.PushBackList(root.nearest_task(br_outbnd, 0, root, is_gotten))
+						if objs := root.nearest_task(br_outbnd, 0, root, is_gotten); objs != nil {
+							nearests.PushBackList(objs)
+						}
 					}
 				}
 			}
