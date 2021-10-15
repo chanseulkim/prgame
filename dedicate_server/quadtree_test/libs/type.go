@@ -3,7 +3,7 @@ package libs
 type Float float32
 
 type Vector2 struct {
-	X, Y Float
+	X, Y int
 }
 
 /*
@@ -20,11 +20,11 @@ type GObject struct {
 	Id            int
 	Name          string
 	Pos           Vector2
-	SightRadius   Float
+	SightRadius   int
 	CollisionArea Rectangle
 }
 
-func NewGObject(id int, name string, pos Vector2, radius Float) *GObject {
+func NewGObject(id int, name string, pos Vector2, radius int) *GObject {
 	return &GObject{
 		Id:          id,
 		Name:        name,
