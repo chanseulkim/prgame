@@ -241,10 +241,7 @@ func (self *QuadNode) near(target_pos Vector2, sight_radius Float, out_objects *
 		if sight_radius > 0 {
 		}
 		// *out_objects = append(*out_objects, self.objs...)
-		*out_objects = append(*out_objects, self.Parent.TopLeft.GetAllObjects()...)
-		*out_objects = append(*out_objects, self.Parent.TopRight.GetAllObjects()...)
-		*out_objects = append(*out_objects, self.Parent.BottomLeft.GetAllObjects()...)
-		*out_objects = append(*out_objects, self.Parent.BottomRight.GetAllObjects()...)
+		*out_objects = append(*out_objects, self.Parent.GetAllObjects()...)
 	}
 
 	x := target_pos.X

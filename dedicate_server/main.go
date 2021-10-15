@@ -9,7 +9,7 @@ import (
 
 func main() {
 	GetWorld()
-	serverAddr := RunUDPServer("0.0.0.0", 51081)
+	serverAddr := RunTcpServer("0.0.0.0", 51080)
 	fmt.Println(serverAddr)
 	for {
 		time.Sleep(3 * time.Second)

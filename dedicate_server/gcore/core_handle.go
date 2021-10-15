@@ -30,8 +30,8 @@ func ExecLockstep() {
 	var duration int64
 	for {
 		packet := <-packet_que
-		copy(sending_buffer[sending_size:], packet.GetBytes())
-		sending_size += int(packet.GetBytesLength())
+		copy(sending_buffer[sending_size:], packet.GetData())
+		sending_size += int(packet.GetDataLength())
 		//나머지
 		for (sending_size != 0) && (sending_size < DGRAM_SIZE) {
 			now_timestamp = GetNowTimeMili()
@@ -41,8 +41,8 @@ func ExecLockstep() {
 			}
 			select {
 			case packet := <-packet_que:
-				copy(sending_buffer[sending_size:], packet.GetBytes())
-				sending_size += int(packet.GetBytesLength())
+				copy(sending_buffer[sending_size:], packet.GetData())
+				sending_size += int(packet.GetDataLength())
 			default:
 				continue
 			}
@@ -147,25 +147,12 @@ func SyncAllObjects(tick_mili time.Duration) {
 	}
 
 }
-func handleEnterClient(nickname string, client_addr net.Addr, pos Vector2) bool {
-	_, exists := GetWorld().Players[nickname]
-	if exists == false {
-		fmt.Println("enter client : " + client_addr.String() + ", " + nickname)
-		GetWorld().AddPlayer(nickname, client_addr, pos)
-		GetWorld().Players[nickname] = NewPlayer(0, nickname, client_addr, pos, DEFAULT_COLISION_RADIUS)
-	}
-	return true
-}
-
-func handleMove(player *Player, action string) {
-	return
-}
 
 func handleCommand(buf []byte, buf_len int, client_addr net.Addr) {
 	packet := ParsePacketHeader(buf)
 	if packet.HeaderType == TYPE_HEADER_CMD {
 		if packet.Command == TYPE_COMMAND_ENTER {
-			userid, pos_v2 := ParseCommandData(packet.GetBytes())
+			userid, pos_v2 := ParseCommandData(packet.GetData())
 			handleEnterClient(userid, client_addr, pos_v2)
 			fmt.Println("enter ", userid)
 			// screen_size := header[2]
